@@ -13,7 +13,11 @@ let package = Package(
     targets: [
         .target(name: "ColibriKit"),
         .target(name: "ColibriAPI", dependencies: ["ColibriKit"]),
-        .executableTarget(name: "SwiftColibriApp", dependencies: ["ColibriKit", "ColibriAPI"]),
+        .executableTarget(
+            name: "SwiftColibriApp",
+            dependencies: ["ColibriKit", "ColibriAPI"],
+            resources: [.copy("Resources")]
+        ),
         .executableTarget(name: "swiftcolibri", dependencies: ["ColibriKit", "ColibriAPI"]),
         .testTarget(
             name: "ColibriKitTests",

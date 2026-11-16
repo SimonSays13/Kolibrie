@@ -7,14 +7,34 @@ enum AppInfo {
     static let apacheLicence = URL(string: "https://www.apache.org/licenses/LICENSE-2.0")!
 }
 
+/// The logo at the top of the About window: white artwork for dark mode, black otherwise.
+enum AboutLogo {
+    static func image(dark: Bool) -> NSImage? {
+        let name = dark ? "about-logo-white" : "about-logo-black"
+        guard
+            let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Resources")
+        else { return nil }
+        return NSImage(contentsOf: url)
+    }
+}
+
 struct AboutView: View {
     let app: AppModel
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 14) {
-            Image(systemName: "cpu.fill")
-                .font(.system(size: 44))
-                .foregroundStyle(.tint)
+            if let logo = AboutLogo.image(dark: colorScheme == .dark) {
+                Image(nsImage: logo)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 60)
+                    .accessibilityLabel("Logo")
+            } else {
+                Image(systemName: "cpu.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.tint)
+            }
             VStack(spacing: 2) {
                 Text(AppInfo.name).font(.title2.weight(.semibold))
                 Text("Version \(AppInfo.version)").font(.callout).foregroundStyle(.secondary)
