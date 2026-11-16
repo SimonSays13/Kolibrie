@@ -1,0 +1,44 @@
+{
+  "configured": true,
+  "config_path": "/Users/example/Library/Application Support/colibri/setup.json",
+  "setup": {
+    "status": "ready",
+    "model": {
+      "id": "qwen36-35b",
+      "name": "Qwen3.6-35B-A3B",
+      "repo": "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64",
+      "revision": "main"
+    },
+    "model_dir": "/Users/example/colibri-models/qwen36-35b",
+    "backend": "cpu",
+    "engine": "/Users/example/Development/colibri/c/qwen36",
+    "env": {},
+    "ready": true
+  },
+  "server": {
+    "state": "stopped",
+    "pid": null,
+    "urls": {
+      "browser": "http://127.0.0.1:8000/",
+      "openai_base_url": "http://127.0.0.1:8000/v1",
+      "anthropic_base_url": "http://127.0.0.1:8000"
+    },
+    "model": "Qwen3.6-35B-A3B",
+    "model_dir": "/Users/example/colibri-models/qwen36-35b",
+    "backend": "cpu",
+    "model_id": null,
+    "tokens_per_second": null,
+    "last_turn": null
+  },
+  "install": {
+    "phase": "started",
+    "pid": 21937,
+    "updated": 1794850145.4096599,
+    "urls": {
+      "browser": "http://127.0.0.1:8000/",
+      "openai_base_url": "http://127.0.0.1:8000/v1",
+      "anthropic_base_url": "http://127.0.0.1:8000"
+    },
+    "running": false
+  }
+}

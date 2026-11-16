@@ -1,0 +1,41 @@
+{
+  "status": "ready",
+  "model": {
+    "id": "qwen36-35b",
+    "name": "Qwen3.6-35B-A3B",
+    "repo": "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64",
+    "revision": "main"
+  },
+  "model_dir": "/Users/example/colibri-models/qwen36-35b",
+  "family": "qwen36",
+  "launcher": "/Users/example/Development/colibri/c/coli",
+  "engine": "/Users/example/Development/colibri/c/qwen36",
+  "engine_source": "built",
+  "backend": "cpu",
+  "gpu": null,
+  "env": {},
+  "args": [
+    "web",
+    "--model",
+    "/Users/example/colibri-models/qwen36-35b",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8000",
+    "--auto-tier"
+  ],
+  "ctx": 0,
+  "host": "127.0.0.1",
+  "port": 8000,
+  "urls": {
+    "browser": "http://127.0.0.1:8000/",
+    "openai_base_url": "http://127.0.0.1:8000/v1",
+    "anthropic_base_url": "http://127.0.0.1:8000"
+  },
+  "requested_backend": "auto",
+  "gpu_pending": [],
+  "nvidia": [],
+  "failed_builds": [],
+  "version": 1,
+  "updated": "2026-11-16T17:28:59"
+}

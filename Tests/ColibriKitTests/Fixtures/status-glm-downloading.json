@@ -1,0 +1,46 @@
+{
+  "configured": true,
+  "config_path": "/Users/example/Library/Application Support/colibri-glm-5.3/setup.json",
+  "setup": {
+    "status": "pending",
+    "model": {
+      "id": "glm-5.3",
+      "name": "GLM-5.3",
+      "repo": "Justvugg/GLM-5.3-colibri-int4-g64",
+      "revision": "main"
+    },
+    "model_dir": "/Volumes/HD-Ext/colibri-models/glm-5.3",
+    "backend": null,
+    "engine": null,
+    "env": null,
+    "ready": false
+  },
+  "server": {
+    "state": "stopped",
+    "pid": null,
+    "urls": {
+      "browser": "http://127.0.0.1:8001/",
+      "openai_base_url": "http://127.0.0.1:8001/v1",
+      "anthropic_base_url": "http://127.0.0.1:8001"
+    },
+    "model": "GLM-5.3",
+    "model_dir": "/Volumes/HD-Ext/colibri-models/glm-5.3",
+    "backend": null,
+    "model_id": null,
+    "tokens_per_second": null,
+    "last_turn": null
+  },
+  "install": {
+    "phase": "download",
+    "pid": 27072,
+    "updated": 1794855026.0768268,
+    "model": "glm-5.3",
+    "file": "out-00085.safetensors",
+    "done": 337335973141,
+    "total": 419316798141,
+    "rate": 92375263.01682924,
+    "eta_seconds": 887.475957552234,
+    "model_dir": "/Volumes/HD-Ext/colibri-models/glm-5.3",
+    "running": true
+  }
+}

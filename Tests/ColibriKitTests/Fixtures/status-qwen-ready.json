@@ -1,0 +1,52 @@
+{
+  "configured": true,
+  "config_path": "/Users/example/Library/Application Support/colibri/setup.json",
+  "setup": {
+    "status": "ready",
+    "model": {
+      "id": "qwen36-35b",
+      "name": "Qwen3.6-35B-A3B",
+      "repo": "Kreuzzelg/qwen36-35b-a3b-colibri-i4-gs64",
+      "revision": "main"
+    },
+    "model_dir": "/Users/example/colibri-models/qwen36-35b",
+    "backend": "cpu",
+    "engine": "/Users/example/Development/colibri/c/qwen36",
+    "env": {},
+    "ready": true
+  },
+  "server": {
+    "state": "ready",
+    "pid": 42992,
+    "urls": {
+      "browser": "http://127.0.0.1:8000/",
+      "openai_base_url": "http://127.0.0.1:8000/v1",
+      "anthropic_base_url": "http://127.0.0.1:8000"
+    },
+    "model": "Qwen3.6-35B-A3B",
+    "model_dir": "/Users/example/colibri-models/qwen36-35b",
+    "backend": "cpu",
+    "model_id": "qwen3.6-colibri",
+    "tokens_per_second": 6.85,
+    "last_turn": {
+      "wall_s": 1.313693,
+      "prompt_tokens": 14,
+      "completion_tokens": 9,
+      "expert_disk_s": 0.329283,
+      "expert_wait_s": 0.0,
+      "expert_matmul_s": 0.817563,
+      "attention_s": 0.129553,
+      "lm_head_s": 0.0,
+      "forwards": 10
+    },
+    "arch": "qwen36"
+  },
+  "install": {
+    "phase": "build",
+    "pid": 42966,
+    "updated": 1794855569.549442,
+    "engine": "qwen36",
+    "backend": "cpu",
+    "running": false
+  }
+}
