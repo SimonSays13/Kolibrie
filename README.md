@@ -1,5 +1,7 @@
 # swiftColibri
 
+> Working name, to be confirmed before the first release.
+
 A native macOS menu bar app, written entirely in Swift, for installing, configuring and running [Colibri](https://github.com/JustVugg/colibri) and pointing coding harnesses at its models.
 
 Status: planning. No code yet.
@@ -18,4 +20,4 @@ macOS 15 or later on Apple Silicon.
 
 ## Licence
 
-To be confirmed (Apache-2.0 proposed, matching Colibri).
+Apache-2.0, the same licence as Colibri. See `LICENSE` and `NOTICE`. Model weights keep their own licences.
