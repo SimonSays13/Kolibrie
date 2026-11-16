@@ -71,7 +71,7 @@ public enum ProcessRunner {
     ) async throws -> ProcessOutput {
         let fileManager = FileManager.default
         let scratch = fileManager.temporaryDirectory
-            .appendingPathComponent("swiftcolibri-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("kolibrie-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: scratch, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: scratch) }
 

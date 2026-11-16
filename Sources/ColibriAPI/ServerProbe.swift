@@ -3,7 +3,7 @@ import Foundation
 
 extension URLSession {
     /// A short-timeout session for talking to servers on this Mac.
-    public static let swiftColibri: URLSession = {
+    public static let kolibrie: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 3
         configuration.waitsForConnectivity = false
@@ -49,7 +49,7 @@ public struct ServerProbe: Sendable {
     public let baseURL: URL
     private let session: URLSession
 
-    public init(baseURL: URL, session: URLSession = .swiftColibri) {
+    public init(baseURL: URL, session: URLSession = .kolibrie) {
         self.baseURL = baseURL
         self.session = session
     }

@@ -7,11 +7,11 @@ struct MenuContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("swiftColibri").font(.headline).padding(.horizontal, 14).padding(.vertical, 10)
+            Text("Kolibrie").font(.headline).padding(.horizontal, 14).padding(.vertical, 10)
             Divider()
             if app.launcherMissing {
                 notice(
-                    "Colibri's launcher was not found. Install Colibri, or set SWIFTCOLIBRI_COLI to the path of its coli script."
+                    "Colibri's launcher was not found. Install Colibri, or set KOLIBRIE_COLI to the path of its coli script."
                 )
             } else if app.controllers.isEmpty {
                 notice("No Colibri installs found in ~/Library/Application Support.")

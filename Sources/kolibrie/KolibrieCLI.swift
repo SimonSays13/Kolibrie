@@ -3,7 +3,7 @@ import ColibriKit
 import Foundation
 
 @main
-struct SwiftColibriCLI {
+struct KolibrieCLI {
     static func main() async {
         let arguments = Array(CommandLine.arguments.dropFirst())
         let command = arguments.first ?? "list"
@@ -21,7 +21,7 @@ struct SwiftColibriCLI {
             await list(discovery.models, runtime: runtime)
         case "start", "stop":
             guard arguments.count > 1, let model = discovery.models.first(where: { $0.id == arguments[1] }) else {
-                fail("usage: swiftcolibri \(command) <id>   (ids come from `swiftcolibri list`)")
+                fail("usage: kolibrie \(command) <id>   (ids come from `kolibrie list`)")
             }
             do {
                 if command == "start" { try await runtime.start(model) } else { try await runtime.stop(model) }
@@ -31,7 +31,7 @@ struct SwiftColibriCLI {
                 fail(error.localizedDescription)
             }
         default:
-            fail("usage: swiftcolibri [list | start <id> | stop <id>]")
+            fail("usage: kolibrie [list | start <id> | stop <id>]")
         }
     }
 

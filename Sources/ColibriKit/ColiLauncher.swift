@@ -60,7 +60,7 @@ public enum LauncherLocator {
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> ColiLauncher? {
         var scripts = hints
-        if let override = environment["SWIFTCOLIBRI_COLI"] { scripts.append(override) }
+        if let override = environment["KOLIBRIE_COLI"] { scripts.append(override) }
         scripts.append(home.appendingPathComponent("Development/colibri/c/coli").path)
         guard let script = scripts.first(where: { FileManager.default.isReadableFile(atPath: $0) }) else {
             return nil

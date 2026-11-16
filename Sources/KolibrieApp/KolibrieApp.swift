@@ -1,12 +1,13 @@
 import SwiftUI
 
 @main
-struct SwiftColibriApp: App {
+struct KolibrieApp: App {
     @State private var app = AppModel()
 
     init() {
         MainActor.assumeIsolated {
             _ = NSApplication.shared.setActivationPolicy(.accessory)
+            if let icon = Branding.icon { NSApplication.shared.applicationIconImage = icon }
         }
     }
 
@@ -23,7 +24,7 @@ struct SwiftColibriApp: App {
         }
         .defaultSize(width: 760, height: 480)
 
-        Window("About swiftColibri", id: "about") {
+        Window("About Kolibrie", id: "about") {
             AboutView(app: app)
         }
         .windowResizability(.contentSize)

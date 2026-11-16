@@ -2,23 +2,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "swiftColibri",
+    name: "Kolibrie",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "ColibriKit", targets: ["ColibriKit"]),
         .library(name: "ColibriAPI", targets: ["ColibriAPI"]),
-        .executable(name: "SwiftColibriApp", targets: ["SwiftColibriApp"]),
-        .executable(name: "swiftcolibri", targets: ["swiftcolibri"]),
+        .executable(name: "KolibrieApp", targets: ["KolibrieApp"]),
+        .executable(name: "kolibrie", targets: ["kolibrie"]),
     ],
     targets: [
         .target(name: "ColibriKit"),
         .target(name: "ColibriAPI", dependencies: ["ColibriKit"]),
         .executableTarget(
-            name: "SwiftColibriApp",
+            name: "KolibrieApp",
             dependencies: ["ColibriKit", "ColibriAPI"],
             resources: [.copy("Resources")]
         ),
-        .executableTarget(name: "swiftcolibri", dependencies: ["ColibriKit", "ColibriAPI"]),
+        .executableTarget(name: "kolibrie", dependencies: ["ColibriKit", "ColibriAPI"]),
         .testTarget(
             name: "ColibriKitTests",
             dependencies: ["ColibriKit"],
