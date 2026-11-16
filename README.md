@@ -21,7 +21,7 @@ Phase 1 of the plan: the core and a first menu bar app. It finds existing Colibr
 You need macOS 15 or later on Apple Silicon and Xcode. The Command Line Tools alone are not enough, because SwiftUI's macros ship only with Xcode.
 
 ```sh
-export DEVELOPER_DIR=/Applications/Development/Xcode.app/Contents/Developer
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer   # adjust to where Xcode lives
 swift build
 swift test
 swift run SwiftColibriApp          # the menu bar app
