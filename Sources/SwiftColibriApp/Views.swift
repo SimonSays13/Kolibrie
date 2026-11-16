@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MenuContentView: View {
     let app: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -20,7 +21,11 @@ struct MenuContentView: View {
                 Divider()
             }
             ForEach(app.problems, id: \.self) { notice($0) }
-            HStack {
+            HStack(spacing: 16) {
+                Button("About") {
+                    openWindow(id: "about")
+                    NSApplication.shared.activate()
+                }
                 Button("Refresh") {
                     Task {
                         app.rescan()

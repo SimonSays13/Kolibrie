@@ -30,6 +30,21 @@ public struct ColiLauncher: Sendable, Equatable {
         self.python = python
         self.script = script
     }
+
+    /// Colibri's version, read from `version.py` beside the `coli` script.
+    public var installedVersion: String? {
+        let file = script.deletingLastPathComponent().appendingPathComponent("version.py")
+        guard let text = try? String(contentsOf: file, encoding: .utf8) else { return nil }
+        return Self.parseVersion(text)
+    }
+
+    static func parseVersion(_ text: String) -> String? {
+        for line in text.split(separator: "\n") where line.contains("__version__") {
+            let parts = line.split(separator: "\"", omittingEmptySubsequences: false)
+            if parts.count >= 3, !parts[1].isEmpty { return String(parts[1]) }
+        }
+        return nil
+    }
 }
 
 public enum LauncherLocator {

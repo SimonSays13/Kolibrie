@@ -17,6 +17,8 @@ final class AppModel {
         polling = Task { [weak self] in await self?.pollLoop() }
     }
 
+    var colibriVersion: String? { runtime?.cli.launcher.installedVersion }
+
     var menuBarSymbol: String {
         let states = controllers.compactMap(\.state)
         if states.contains(where: { if case .failed = $0 { return true } else { return false } }) {

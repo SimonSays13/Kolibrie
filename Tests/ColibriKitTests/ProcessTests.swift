@@ -85,6 +85,12 @@ struct LauncherTests {
         #expect(LauncherLocator.parsePythonVersion("not python") == nil)
     }
 
+    @Test func readsTheInstalledColibriVersion() {
+        let text = "\"\"\"Single source of truth for the colibri version number.\"\"\"\n\n__version__ = \"2.1.0\"\n"
+        #expect(ColiLauncher.parseVersion(text) == "2.1.0")
+        #expect(ColiLauncher.parseVersion("nothing here") == nil)
+    }
+
     @Test func findsNothingWithoutAColiScript() {
         let empty = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         #expect(LauncherLocator.locate(hints: [], home: empty, environment: [:]) == nil)
