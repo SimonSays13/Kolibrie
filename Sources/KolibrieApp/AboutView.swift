@@ -18,6 +18,14 @@ enum Branding {
     /// The logo with wordmark, shown at the top of the About window. Its colours work in light and dark mode.
     static var logo: NSImage? { image(named: "about-logo") }
 
+    /// The bird for the menu bar, as a template image so macOS tints it for light and dark menu bars.
+    static func menuBarBird(active: Bool) -> NSImage? {
+        guard let bird = image(named: active ? "menubar-bird" : "menubar-bird-idle") else { return nil }
+        bird.size = NSSize(width: 22, height: 16)
+        bird.isTemplate = true
+        return bird
+    }
+
     /// The app icon, used for the Dock and the application switcher.
     static var icon: NSImage? { image(named: "app-icon") }
 }

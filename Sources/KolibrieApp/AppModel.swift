@@ -34,6 +34,9 @@ final class AppModel {
         return "cpu"
     }
 
+    /// The bird is shown when idle or serving; other states keep a status symbol.
+    var menuBarShowsBird: Bool { menuBarSymbol == "cpu" || menuBarSymbol == "cpu.fill" }
+
     func pollLoop() async {
         while !Task.isCancelled {
             rescan()

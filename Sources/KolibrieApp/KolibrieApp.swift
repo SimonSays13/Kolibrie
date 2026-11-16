@@ -15,7 +15,11 @@ struct KolibrieApp: App {
         MenuBarExtra {
             MenuContentView(app: app)
         } label: {
-            Image(systemName: app.menuBarSymbol)
+            if app.menuBarShowsBird, let bird = Branding.menuBarBird(active: app.menuBarSymbol == "cpu.fill") {
+                Image(nsImage: bird)
+            } else {
+                Image(systemName: app.menuBarSymbol)
+            }
         }
         .menuBarExtraStyle(.window)
 
