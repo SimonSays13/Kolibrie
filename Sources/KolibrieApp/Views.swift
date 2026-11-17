@@ -176,6 +176,10 @@ struct ModelRow: View {
                 openWindow(id: "logs", value: controller.id)
                 NSApplication.shared.activate()
             }
+            Button("Configure…") {
+                openWindow(id: "configure", value: controller.id)
+                NSApplication.shared.activate()
+            }
             Divider()
             Button("Delete…") {
                 openWindow(id: "delete", value: controller.id)

@@ -44,6 +44,11 @@ struct KolibrieApp: App {
         }
         .windowResizability(.contentSize)
 
+        WindowGroup("Configure model", id: "configure", for: String.self) { $modelID in
+            ConfigureModelView(app: app, modelID: modelID)
+        }
+        .windowResizability(.contentSize)
+
         Window("Models", id: "models") {
             ModelsView(app: app)
         }

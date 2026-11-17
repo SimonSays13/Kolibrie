@@ -176,6 +176,32 @@ final class ModelController: Identifiable {
 
     var hasModelID: Bool { server?.modelID != nil }
 
+    // MARK: Configuration
+
+    private(set) var isApplyingSettings = false
+
+    /// The settings this model is currently running with, read back from its own `setup.json`.
+    var currentSettings: ColibriSettings {
+        ColibriSettings.parse(args: installed.config.args, env: installed.config.environment)
+    }
+
+    @discardableResult
+    func applySettings(_ settings: ColibriSettings) async -> Bool {
+        guard let runtime = app.runtime, !isApplyingSettings else { return false }
+        message = nil
+        isApplyingSettings = true
+        defer { isApplyingSettings = false }
+        do {
+            try await runtime.reconfigure(installed, settings: settings)
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
+        app.rescan()
+        await refresh()
+        return true
+    }
+
     // MARK: Harness launching
 
     var canLaunchHarness: Bool { state == .ready }

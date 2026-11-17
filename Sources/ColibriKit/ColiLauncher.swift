@@ -8,6 +8,7 @@ public enum ColiError: Error, LocalizedError, Equatable {
     case installNotRunning
     case installDidNotStop
     case deletionBlocked(String)
+    case missingModelDirectory
 
     public var errorDescription: String? {
         switch self {
@@ -26,6 +27,8 @@ public enum ColiError: Error, LocalizedError, Equatable {
             return "The download did not stop. Try again in a moment."
         case .deletionBlocked(let reason):
             return reason
+        case .missingModelDirectory:
+            return "This model's setup does not record a model directory to reconfigure from."
         }
     }
 }
