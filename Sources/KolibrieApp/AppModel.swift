@@ -32,9 +32,11 @@ final class AppModel {
     private var pendingInstalls: [String: Date] = [:]
     private(set) var modelsDirectoryPreference: String? = UserDefaults.standard.string(forKey: modelsDirectoryKey)
     private var polling: Task<Void, Never>?
+    private(set) var installedHarnesses: Set<Harness> = []
 
     init() {
         polling = Task { [weak self] in await self?.pollLoop() }
+        Task { [weak self] in await self?.detectHarnesses() }
     }
 
     var colibriVersion: String? { runtime?.cli.launcher.installedVersion }
@@ -56,6 +58,14 @@ final class AppModel {
 
     /// The bird is shown when idle or serving; other states keep a status symbol.
     var menuBarShowsBird: Bool { menuBarSymbol == "cpu" || menuBarSymbol == "cpu.fill" }
+
+    func detectHarnesses() async {
+        var found: Set<Harness> = []
+        for harness in Harness.allCases where await HarnessDetector.isInstalled(harness) {
+            found.insert(harness)
+        }
+        installedHarnesses = found
+    }
 
     func pollLoop() async {
         while !Task.isCancelled {

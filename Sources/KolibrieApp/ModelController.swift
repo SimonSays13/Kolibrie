@@ -1,4 +1,5 @@
 import AppKit
+import ColibriAPI
 import ColibriKit
 import Foundation
 import Observation
@@ -174,6 +175,40 @@ final class ModelController: Identifiable {
     func copyModelID() { copy(server?.modelID) }
 
     var hasModelID: Bool { server?.modelID != nil }
+
+    // MARK: Harness launching
+
+    var canLaunchHarness: Bool { state == .ready }
+
+    var availableHarnesses: [Harness] {
+        app.installedHarnesses.sorted { $0.displayName < $1.displayName }
+    }
+
+    private func harnessEndpoint() async -> HarnessEndpoint? {
+        guard let modelID = server?.modelID ?? installed.config.model?.id else { return nil }
+        let openaiURL = endpoints?.openaiBaseURL.flatMap(URL.init(string:))
+        let anthropicURL = endpoints?.anthropicBaseURL.flatMap(URL.init(string:))
+        var contextLength: Int?
+        if let openaiURL {
+            let models = try? await ServerProbe(baseURL: openaiURL).models()
+            contextLength = models?.first(where: { $0.id == modelID })?.contextLength
+        }
+        return HarnessEndpoint(
+            openaiBaseURL: openaiURL, anthropicBaseURL: anthropicURL, modelID: modelID, contextLength: contextLength)
+    }
+
+    func launch(_ harness: Harness) async {
+        message = nil
+        guard let endpoint = await harnessEndpoint() else {
+            message = "No model ID is available yet to launch \(harness.displayName)."
+            return
+        }
+        do {
+            try HarnessRunner.launch(harness, endpoint: endpoint)
+        } catch {
+            message = error.localizedDescription
+        }
+    }
 
     private func copy(_ text: String?) {
         guard let text else { return }

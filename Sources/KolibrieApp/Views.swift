@@ -161,6 +161,17 @@ struct ModelRow: View {
             Button("Copy Anthropic base URL") { controller.copyAnthropicURL() }
             Button("Copy model ID") { controller.copyModelID() }.disabled(!controller.hasModelID)
             Divider()
+            if controller.availableHarnesses.isEmpty {
+                Text("No coding harnesses found on PATH")
+            } else {
+                Menu("Launch") {
+                    ForEach(controller.availableHarnesses, id: \.self) { harness in
+                        Button(harness.displayName) { Task { await controller.launch(harness) } }
+                    }
+                }
+                .disabled(!controller.canLaunchHarness)
+            }
+            Divider()
             Button("Show server log") {
                 openWindow(id: "logs", value: controller.id)
                 NSApplication.shared.activate()

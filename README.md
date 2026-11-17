@@ -23,7 +23,8 @@ Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri instal
 | `kolibrie` helper: `list`, `start`, `stop`, `catalogue`, `install`, `pause`, `resume`, `delete`, `install-colibri`, `check-updates` | Working |
 | Set up Colibri when it is missing: checks Python and libomp, installs them with Homebrew if present, downloads the release archive, verifies its checksum | Core tested, including a real download and checksum check; the offer window at launch is built but not yet seen on a Mac without Colibri |
 | Update checks at launch for Colibri and Kolibrie, with an Updates window; Colibri updates restart running models; Kolibrie replaces itself and reopens | Checks tested against GitHub; Colibri update uses the tested installer; the app swap is tested on a stand-in app, not yet on a packaged release |
-| Metal engine option, harness launcher, configuration UI, updates, run at login | Planned |
+| Harness launcher: Claude Code, Codex, OpenCode, Pi, Hermes Agent, Copilot CLI (pure env vars or CLI flags); Mistral Vibe, DeepSeek Harness (isolated per-launch config); OpenClaw (isolated config, schema unverified) | Built, with unit-tested config generation for each harness; not yet checked by eye in a real Terminal window, and only Claude Code, Codex, OpenCode, Pi and Hermes Agent are installed on the dev Mac to confirm against |
+| Metal engine option, configuration UI, run at login | Planned |
 
 ## Building
 

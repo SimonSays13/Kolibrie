@@ -121,3 +121,20 @@ public enum ProcessRunner {
         )
     }
 }
+
+/// Checks whether a coding harness's executable is on the user's `PATH`.
+///
+/// Runs through a login shell so Homebrew and other PATH additions in `.zprofile`/`.zshrc` are
+/// picked up, since a GUI app's own environment often lacks them.
+public enum HarnessDetector {
+    public static func isInstalled(_ harness: Harness) async -> Bool {
+        let output = try? await ProcessRunner.run(
+            executable: URL(fileURLWithPath: "/bin/zsh"),
+            arguments: ["-l", "-c", "command -v \(harness.executableName)"],
+            environment: ProcessInfo.processInfo.environment,
+            timeout: .seconds(5)
+        )
+        guard let output, output.succeeded else { return false }
+        return !output.stdout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
