@@ -28,6 +28,27 @@ struct SettingsView: View {
             }
             Divider()
             VStack(alignment: .leading, spacing: 6) {
+                Text("Login").font(.headline)
+                Toggle(
+                    "Open Kolibrie automatically when I log in",
+                    isOn: Binding(
+                        get: { app.loginItemStatus != .disabled },
+                        set: { app.setOpensAtLogin($0) }
+                    )
+                )
+                .toggleStyle(.checkbox)
+                if app.loginItemStatus == .needsApproval {
+                    HStack {
+                        Label("macOS needs you to approve this.", systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.orange)
+                        Button("Open System Settings…") { LoginItem.openSystemSettings() }
+                    }
+                }
+                Text("Which model, if any, starts automatically is set per model from its \u{2026} menu.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Divider()
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Updates").font(.headline)
                 Toggle(
                     "Check for new versions of Colibri and Kolibrie when Kolibrie starts",

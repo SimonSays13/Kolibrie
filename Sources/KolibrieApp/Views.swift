@@ -180,6 +180,13 @@ struct ModelRow: View {
                 openWindow(id: "configure", value: controller.id)
                 NSApplication.shared.activate()
             }
+            Toggle(
+                "Start automatically at login",
+                isOn: Binding(
+                    get: { controller.autostartsAtLogin },
+                    set: { controller.setAutostartsAtLogin($0) }
+                )
+            )
             Divider()
             Button("Delete…") {
                 openWindow(id: "delete", value: controller.id)

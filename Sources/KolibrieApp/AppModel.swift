@@ -5,6 +5,7 @@ import Observation
 
 private let modelsDirectoryKey = "modelsDirectory"
 private let checkForUpdatesKey = "checkForUpdatesAtLaunch"
+private let autostartModelsKey = "autostartModelIDs"
 
 /// The app's view of every Colibri install on this Mac. It rescans the setup homes and asks
 /// each model for its state on a timer; Colibri itself stays the source of truth.
@@ -33,6 +34,9 @@ final class AppModel {
     private(set) var modelsDirectoryPreference: String? = UserDefaults.standard.string(forKey: modelsDirectoryKey)
     private var polling: Task<Void, Never>?
     private(set) var installedHarnesses: Set<Harness> = []
+    private var didRunAutostart = false
+    private(set) var autostartModelIDs: Set<String> = Set(
+        UserDefaults.standard.stringArray(forKey: autostartModelsKey) ?? [])
 
     init() {
         polling = Task { [weak self] in await self?.pollLoop() }
@@ -71,8 +75,43 @@ final class AppModel {
         while !Task.isCancelled {
             rescan()
             await refreshAll()
+            runAutostartIfNeeded()
             let busy = controllers.contains { $0.state?.isTransitioning == true }
             try? await Task.sleep(for: .seconds(busy ? 1 : 4))
+        }
+    }
+
+    // MARK: Run at login
+
+    var loginItemStatus: LoginItem.Status { LoginItem.status }
+
+    func setOpensAtLogin(_ enabled: Bool) {
+        do {
+            try LoginItem.setEnabled(enabled)
+        } catch {
+            problems.append("Could not change the login item: \(error.localizedDescription)")
+        }
+    }
+
+    func autostartsAtLogin(_ modelID: String) -> Bool { autostartModelIDs.contains(modelID) }
+
+    func setAutostartsAtLogin(_ enabled: Bool, for modelID: String) {
+        if enabled {
+            autostartModelIDs.insert(modelID)
+        } else {
+            autostartModelIDs.remove(modelID)
+        }
+        UserDefaults.standard.set(Array(autostartModelIDs), forKey: autostartModelsKey)
+    }
+
+    /// Starts every model flagged "start automatically at login" that is sitting stopped, once,
+    /// after the first full scan — so this fires whether Kolibrie itself just opened at login or
+    /// the person launched it by hand.
+    private func runAutostartIfNeeded() {
+        guard !didRunAutostart, hasScanned, runtime != nil, !autostartModelIDs.isEmpty else { return }
+        didRunAutostart = true
+        for controller in controllers where autostartModelIDs.contains(controller.id) && controller.state == .stopped {
+            Task { await controller.start() }
         }
     }
 

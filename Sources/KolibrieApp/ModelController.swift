@@ -176,6 +176,12 @@ final class ModelController: Identifiable {
 
     var hasModelID: Bool { server?.modelID != nil }
 
+    // MARK: Run at login
+
+    var autostartsAtLogin: Bool { app.autostartsAtLogin(id) }
+
+    func setAutostartsAtLogin(_ enabled: Bool) { app.setAutostartsAtLogin(enabled, for: id) }
+
     // MARK: Configuration
 
     private(set) var isApplyingSettings = false
