@@ -7,6 +7,10 @@ struct KolibrieCLI {
     static func main() async {
         let arguments = Array(CommandLine.arguments.dropFirst())
         let command = arguments.first ?? "list"
+        if command == "install-colibri" {
+            await installColibri(Array(arguments.dropFirst()))
+            return
+        }
         let discovery = Discovery.installedModels()
         guard
             let launcher = LauncherLocator.locate(hints: discovery.models.compactMap { $0.config.launcher })
@@ -69,7 +73,7 @@ struct KolibrieCLI {
             await install(Array(arguments.dropFirst()), discovery: discovery, runtime: runtime)
         default:
             fail(
-                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>] | pause <id> | resume <id> | delete <id> --yes]"
+                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>] | pause <id> | resume <id> | delete <id> --yes | install-colibri [--to <folder>]]"
             )
         }
     }
@@ -89,6 +93,25 @@ struct KolibrieCLI {
                 pad(model.id, 22) + pad(model.displayName, 24) + pad(state, 22)
                     + pad(model.port.map(String.init) ?? "-", 6)
                     + pad(server?.backend ?? model.config.backend ?? "-", 8) + http)
+        }
+    }
+
+    static func installColibri(_ arguments: [String]) async {
+        let prerequisites = Prerequisites.check()
+        print("Python 3.10+: \(prerequisites.python?.path ?? "not found")")
+        print("OpenMP:       \(prerequisites.hasOpenMP ? "found" : "not found")")
+        if let command = prerequisites.brewCommand { print("Missing. Run: \(command)") }
+        var installer = ColibriInstaller()
+        if let index = arguments.firstIndex(of: "--to"), arguments.indices.contains(index + 1) {
+            installer = ColibriInstaller(destination: URL(fileURLWithPath: arguments[index + 1]))
+        }
+        do {
+            let release = try await installer.latestRelease()
+            print("Latest release: \(release.tag)")
+            let launcher = try await installer.install(release) { print("  \($0)") }
+            print("Installed: \(launcher.path)")
+        } catch {
+            fail(error.localizedDescription)
         }
     }
 

@@ -56,26 +56,52 @@ public struct ColiLauncher: Sendable, Equatable {
     }
 }
 
+/// What was found when looking for Colibri's launcher; either part can be missing on its own.
+public struct LauncherDiagnosis: Sendable, Equatable {
+    public var script: URL?
+    public var python: URL?
+
+    public init(script: URL?, python: URL?) {
+        self.script = script
+        self.python = python
+    }
+
+    public var launcher: ColiLauncher? {
+        guard let script, let python else { return nil }
+        return ColiLauncher(python: python, script: script)
+    }
+}
+
 public enum LauncherLocator {
     static let pythonCandidates = [
         "/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3",
     ]
 
-    /// Looks for a usable `coli` script and a Python 3.10 or newer.
+    /// Looks for a `coli` script and a Python 3.10 or newer, and says what it found of each.
     /// - Parameter hints: launcher paths taken from `setup.json` files, tried first.
+    public static func diagnose(
+        hints: [String] = [],
+        home: URL = FileManager.default.homeDirectoryForCurrentUser,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> LauncherDiagnosis {
+        var scripts = hints
+        if let override = environment["KOLIBRIE_COLI"] { scripts.append(override) }
+        let managed = ColibriInstaller.defaultDestination(home: home)
+        scripts.append(managed.appendingPathComponent("coli").path)
+        scripts.append(managed.appendingPathComponent("c/coli").path)
+        scripts.append(home.appendingPathComponent("Development/colibri/c/coli").path)
+        return LauncherDiagnosis(
+            script: scripts.first(where: { FileManager.default.isReadableFile(atPath: $0) })
+                .map { URL(fileURLWithPath: $0) },
+            python: pythonCandidates.first(where: isUsablePython).map { URL(fileURLWithPath: $0) })
+    }
+
     public static func locate(
         hints: [String] = [],
         home: URL = FileManager.default.homeDirectoryForCurrentUser,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> ColiLauncher? {
-        var scripts = hints
-        if let override = environment["KOLIBRIE_COLI"] { scripts.append(override) }
-        scripts.append(home.appendingPathComponent("Development/colibri/c/coli").path)
-        guard let script = scripts.first(where: { FileManager.default.isReadableFile(atPath: $0) }) else {
-            return nil
-        }
-        guard let python = pythonCandidates.first(where: isUsablePython) else { return nil }
-        return ColiLauncher(python: URL(fileURLWithPath: python), script: URL(fileURLWithPath: script))
+        diagnose(hints: hints, home: home, environment: environment).launcher
     }
 
     static func isUsablePython(_ path: String) -> Bool {

@@ -15,11 +15,7 @@ struct KolibrieApp: App {
         MenuBarExtra {
             MenuContentView(app: app)
         } label: {
-            if app.menuBarShowsBird, let bird = Branding.menuBarBird(active: app.menuBarSymbol == "cpu.fill") {
-                Image(nsImage: bird)
-            } else {
-                Image(systemName: app.menuBarSymbol)
-            }
+            MenuBarLabel(app: app)
         }
         .menuBarExtraStyle(.window)
 
@@ -27,6 +23,11 @@ struct KolibrieApp: App {
             LogsView(app: app, modelID: modelID)
         }
         .defaultSize(width: 760, height: 480)
+
+        Window("Set up Colibri", id: "setup-colibri") {
+            SetupColibriView(app: app)
+        }
+        .windowResizability(.contentSize)
 
         Window("Settings", id: "settings") {
             SettingsView(app: app)
@@ -47,5 +48,27 @@ struct KolibrieApp: App {
             AboutView(app: app)
         }
         .windowResizability(.contentSize)
+    }
+}
+
+/// The menu bar icon. It also offers to set Colibri up when the app opens and Colibri is missing.
+private struct MenuBarLabel: View {
+    let app: AppModel
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Group {
+            if app.menuBarShowsBird, let bird = Branding.menuBarBird(active: app.menuBarSymbol == "cpu.fill") {
+                Image(nsImage: bird)
+            } else {
+                Image(systemName: app.menuBarSymbol)
+            }
+        }
+        .task {
+            if await app.colibriIsMissingAtLaunch() {
+                openWindow(id: "setup-colibri")
+                NSApplication.shared.activate()
+            }
+        }
     }
 }

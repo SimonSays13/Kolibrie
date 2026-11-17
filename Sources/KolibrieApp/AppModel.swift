@@ -12,6 +12,13 @@ final class AppModel {
     private(set) var controllers: [ModelController] = []
     private(set) var problems: [String] = []
     private(set) var launcherMissing = false
+    private(set) var hasScanned = false
+    @ObservationIgnored
+    private(set) lazy var colibriSetup = ColibriSetupModel { [weak self] in
+        self?.runtimeNeedsRefresh = true
+        self?.rescan()
+    }
+    private var runtimeNeedsRefresh = false
     private(set) var runtime: ModelRuntime?
     private(set) var catalogue: [CatalogueEntry] = []
     private(set) var catalogueError: String?
@@ -58,7 +65,8 @@ final class AppModel {
     func rescan() {
         let result = Discovery.installedModels()
         problems = result.problems
-        if runtime == nil {
+        if runtime == nil || runtimeNeedsRefresh {
+            runtimeNeedsRefresh = false
             let hints = result.models.compactMap { $0.config.launcher }
             if let launcher = LauncherLocator.locate(hints: hints) {
                 runtime = ModelRuntime(cli: ColiCLI(launcher: launcher))
@@ -68,6 +76,7 @@ final class AppModel {
             }
         }
         settleInstalls(found: result.models)
+        hasScanned = true
         let existing = Dictionary(uniqueKeysWithValues: controllers.map { ($0.id, $0) })
         controllers = result.models.map { installed in
             if let controller = existing[installed.id] {
@@ -92,6 +101,20 @@ final class AppModel {
         for controller in controllers {
             if let snapshot = snapshots[controller.id] { controller.apply(snapshot) }
         }
+    }
+
+    // MARK: Setting Colibri up
+
+    private var launcherHints: [String] { Discovery.installedModels().models.compactMap { $0.config.launcher } }
+
+    func refreshColibriSetup() async { await colibriSetup.refresh(hints: launcherHints) }
+
+    func setUpColibri() async { await colibriSetup.setUp(hints: launcherHints) }
+
+    /// Waits for the first look at this Mac's installs, then reports whether Colibri is missing.
+    func colibriIsMissingAtLaunch() async -> Bool {
+        while !hasScanned { try? await Task.sleep(for: .milliseconds(100)) }
+        return launcherMissing
     }
 
     // MARK: Models and installs

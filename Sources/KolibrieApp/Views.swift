@@ -10,9 +10,12 @@ struct MenuContentView: View {
             Text("Kolibrie").font(.headline).padding(.horizontal, 14).padding(.vertical, 10)
             Divider()
             if app.launcherMissing {
-                notice(
-                    "Colibri's launcher was not found. Install Colibri, or set KOLIBRIE_COLI to the path of its coli script."
-                )
+                notice("Colibri is not set up on this Mac.")
+                Button("Set up Colibri…") {
+                    openWindow(id: "setup-colibri")
+                    NSApplication.shared.activate()
+                }
+                .padding(.horizontal, 14).padding(.bottom, 8)
             } else if app.controllers.isEmpty {
                 notice("No Colibri installs found in ~/Library/Application Support.")
             }
