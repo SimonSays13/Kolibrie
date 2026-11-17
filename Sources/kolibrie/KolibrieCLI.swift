@@ -30,13 +30,46 @@ struct KolibrieCLI {
             } catch {
                 fail(error.localizedDescription)
             }
+        case "pause", "resume":
+            guard arguments.count > 1, let model = discovery.models.first(where: { $0.id == arguments[1] }) else {
+                fail("usage: kolibrie \(command) <id>   (ids come from `kolibrie list`)")
+            }
+            do {
+                if command == "pause" {
+                    let snapshot = await runtime.snapshot(of: model)
+                    try await runtime.pauseDownload(model, report: snapshot.report)
+                } else {
+                    try await runtime.resumeDownload(model)
+                }
+                try? await Task.sleep(for: .seconds(2))
+                print("\(model.id): \(await runtime.snapshot(of: model).state.label)")
+            } catch {
+                fail(error.localizedDescription)
+            }
+        case "delete":
+            guard arguments.count > 1, let model = discovery.models.first(where: { $0.id == arguments[1] }) else {
+                fail("usage: kolibrie delete <id> [--yes]   (ids come from `kolibrie list`)")
+            }
+            let plan = ModelDeletion.plan(for: model, among: discovery.models)
+            if let blocked = plan.blocked { fail(blocked) }
+            print("Would delete: \(plan.modelDirectory?.path ?? "(no model files)")")
+            print("and the setup folder: \(plan.setupHome.path)")
+            if let note = plan.filesNote { print(note) }
+            guard arguments.contains("--yes") else { fail("Nothing deleted. Add --yes to go ahead.") }
+            do {
+                let snapshot = await runtime.snapshot(of: model)
+                try await runtime.delete(model, plan: plan, snapshot: snapshot)
+                print("Deleted \(model.id).")
+            } catch {
+                fail(error.localizedDescription)
+            }
         case "catalogue":
             await catalogue(runtime: runtime, includeUnfit: arguments.contains("--all"))
         case "install":
             await install(Array(arguments.dropFirst()), discovery: discovery, runtime: runtime)
         default:
             fail(
-                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>]]"
+                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>] | pause <id> | resume <id> | delete <id> --yes]"
             )
         }
     }

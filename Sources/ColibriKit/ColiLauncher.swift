@@ -5,6 +5,9 @@ public enum ColiError: Error, LocalizedError, Equatable {
     case commandFailed(command: String, exitCode: Int32, output: String)
     case unparsableOutput(command: String)
     case missingPort
+    case installNotRunning
+    case installDidNotStop
+    case deletionBlocked(String)
 
     public var errorDescription: String? {
         switch self {
@@ -17,6 +20,12 @@ public enum ColiError: Error, LocalizedError, Equatable {
             return "coli \(command) returned output the app could not read."
         case .missingPort:
             return "This model's setup has no port."
+        case .installNotRunning:
+            return "No download is running for this model."
+        case .installDidNotStop:
+            return "The download did not stop. Try again in a moment."
+        case .deletionBlocked(let reason):
+            return reason
         }
     }
 }

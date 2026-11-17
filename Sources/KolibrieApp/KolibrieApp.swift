@@ -28,6 +28,16 @@ struct KolibrieApp: App {
         }
         .defaultSize(width: 760, height: 480)
 
+        Window("Settings", id: "settings") {
+            SettingsView(app: app)
+        }
+        .windowResizability(.contentSize)
+
+        WindowGroup("Delete model", id: "delete", for: String.self) { $modelID in
+            DeleteModelView(app: app, modelID: modelID)
+        }
+        .windowResizability(.contentSize)
+
         Window("Models", id: "models") {
             ModelsView(app: app)
         }

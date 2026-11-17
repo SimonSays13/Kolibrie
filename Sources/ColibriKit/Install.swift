@@ -38,7 +38,12 @@ extension ColiCLI {
     /// back through `coli status`.
     @discardableResult
     public func install(_ request: InstallRequest, root: URL = Discovery.defaultRoot) async throws -> URL {
-        let home = request.setupHome(root: root)
+        try await install(request, home: request.setupHome(root: root))
+    }
+
+    /// The same, for a setup folder that already exists, as when resuming a paused download.
+    @discardableResult
+    public func install(_ request: InstallRequest, home: URL) async throws -> URL {
         let logs = home.appendingPathComponent("logs", isDirectory: true)
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         let log = logs.appendingPathComponent("install.log")

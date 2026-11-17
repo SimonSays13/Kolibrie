@@ -22,6 +22,10 @@ struct MenuContentView: View {
             }
             ForEach(app.problems, id: \.self) { notice($0) }
             HStack(spacing: 16) {
+                Button("Settings…") {
+                    openWindow(id: "settings")
+                    NSApplication.shared.activate()
+                }
                 Button("Models…") {
                     openWindow(id: "models")
                     NSApplication.shared.activate()
@@ -71,6 +75,10 @@ struct ModelRow: View {
             }
             if case .notInstalled(let progress?) = controller.state {
                 ProgressView(value: progress.fraction)
+                Text(controller.downloadSummary(progress)).font(.caption).foregroundStyle(.secondary)
+            }
+            if controller.isDeleting {
+                Text("Deleting…").font(.caption).foregroundStyle(.secondary)
             }
             if case .unavailable(let reason)? = controller.state {
                 Text(reason).font(.caption).foregroundStyle(.orange)
@@ -92,8 +100,10 @@ struct ModelRow: View {
             parts.append(backend.uppercased())
         }
         if let speed = controller.server?.tokensPerSecond { parts.append(String(format: "%.1f tok/s", speed)) }
-        if case .notInstalled(let progress?)? = controller.state, let eta = progress.etaSeconds, progress.isRunning {
-            parts.append("\(Int((eta / 60).rounded(.up))) min left")
+        if case .notInstalled(let progress?)? = controller.state, progress.isRunning,
+            let eta = controller.downloadETA(progress)
+        {
+            parts.append("about \(RemainingTime.text(seconds: eta)) left")
         }
         return parts.joined(separator: " · ")
     }
@@ -117,6 +127,14 @@ struct ModelRow: View {
             Button("Stop") { Task { await controller.stop() } }
         case .starting?, .stopping?:
             ProgressView().controlSize(.small)
+        case .notInstalled(.some)?:
+            if controller.isChangingDownload {
+                ProgressView().controlSize(.small)
+            } else if controller.isDownloadRunning {
+                Button("Pause") { Task { await controller.pauseDownload() } }
+            } else {
+                Button("Resume") { Task { await controller.resumeDownload() } }
+            }
         default:
             EmptyView()
         }
@@ -133,6 +151,12 @@ struct ModelRow: View {
                 openWindow(id: "logs", value: controller.id)
                 NSApplication.shared.activate()
             }
+            Divider()
+            Button("Delete…") {
+                openWindow(id: "delete", value: controller.id)
+                NSApplication.shared.activate()
+            }
+            .disabled(!controller.canDelete)
         } label: {
             Image(systemName: "ellipsis.circle")
         }

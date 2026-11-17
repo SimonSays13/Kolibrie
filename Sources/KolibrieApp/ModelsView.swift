@@ -115,8 +115,9 @@ private struct CatalogueRow: View {
                 if let error = app.installErrors[entry.id] {
                     Text(error).font(.caption).foregroundStyle(.red).lineLimit(3)
                 }
-                if case .notInstalled(let progress?)? = app.controller(for: entry)?.state {
+                if let controller = app.controller(for: entry), case .notInstalled(let progress?)? = controller.state {
                     ProgressView(value: progress.fraction)
+                    Text(controller.downloadSummary(progress)).font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 8)

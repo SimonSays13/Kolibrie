@@ -41,4 +41,31 @@ public struct ModelRuntime: Sendable {
             throw ColiError.commandFailed(command: "stop", exitCode: output.exitCode, output: output.combined)
         }
     }
+
+    /// Stops the download that is running for `model`. Colibri keeps the partial files.
+    public func pauseDownload(_ model: InstalledModel, report: StatusReport?) async throws {
+        guard let install = report?.install, install.running == true, let pid = install.pid else {
+            throw ColiError.installNotRunning
+        }
+        try await InstallProcess.stop(pid: pid)
+    }
+
+    /// Runs the install again with the model's saved settings; Colibri carries on from the partial files.
+    public func resumeDownload(_ model: InstalledModel) async throws {
+        guard let id = model.config.model?.id else { throw ColiError.unparsableOutput(command: "setup") }
+        let config = (try? Discovery.loadConfig(setupHome: model.setupHome)) ?? model.config
+        let port = config.port ?? PortPicker.nextFree()
+        let request = InstallRequest(
+            modelID: id, port: port, modelsDirectory: config.modelsRoot.map { URL(fileURLWithPath: $0) })
+        try await cli.install(request, home: model.setupHome)
+    }
+
+    /// Stops the server or download if one is running, then removes what `plan` lists.
+    public func delete(_ model: InstalledModel, plan: DeletionPlan, snapshot: ModelSnapshot?) async throws {
+        if snapshot?.state == .ready { try await stop(model) }
+        if snapshot?.report?.install?.running == true {
+            try await pauseDownload(model, report: snapshot?.report)
+        }
+        try await Task.detached(priority: .userInitiated) { try ModelDeletion.delete(plan) }.value
+    }
 }

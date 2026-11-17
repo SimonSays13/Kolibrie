@@ -10,6 +10,9 @@ final class ModelController: Identifiable {
     private(set) var installed: InstalledModel
     private(set) var snapshot: ModelSnapshot?
     private(set) var message: String?
+    private(set) var isDeleting = false
+    private(set) var isChangingDownload = false
+    private var estimator = DownloadEstimator()
     private var pending: PendingAction?
     private unowned let app: AppModel
 
@@ -26,11 +29,102 @@ final class ModelController: Identifiable {
 
     func update(_ installed: InstalledModel) { self.installed = installed }
 
-    func apply(_ snapshot: ModelSnapshot) { self.snapshot = snapshot }
+    func apply(_ snapshot: ModelSnapshot) {
+        self.snapshot = snapshot
+        recordDownload(snapshot.state)
+    }
 
     func refresh() async {
         guard let runtime = app.runtime else { return }
-        snapshot = await runtime.snapshot(of: installed, pending: pending)
+        let fresh = await runtime.snapshot(of: installed, pending: pending)
+        snapshot = fresh
+        recordDownload(fresh.state)
+    }
+
+    // MARK: Downloads
+
+    /// Feeds the speed estimate; it starts again whenever the download is not running.
+    private func recordDownload(_ state: ModelState) {
+        if case .notInstalled(let progress?) = state, progress.isRunning {
+            estimator.add(bytes: progress.bytesDone, at: Date.timeIntervalSinceReferenceDate)
+        } else {
+            estimator.reset()
+        }
+    }
+
+    func downloadETA(_ progress: DownloadProgress) -> Double? {
+        estimator.etaSeconds(remainingBytes: progress.bytesTotal - progress.bytesDone)
+    }
+
+    func downloadSummary(_ progress: DownloadProgress) -> String {
+        progress.summary(rate: estimator.bytesPerSecond, eta: downloadETA(progress))
+    }
+
+    var isDownloadRunning: Bool {
+        if case .notInstalled(let progress?)? = state { return progress.isRunning }
+        return false
+    }
+
+    var isDownloadPaused: Bool {
+        if case .notInstalled(let progress?)? = state { return !progress.isRunning }
+        return false
+    }
+
+    func pauseDownload() async {
+        guard let runtime = app.runtime, !isChangingDownload else { return }
+        message = nil
+        isChangingDownload = true
+        defer { isChangingDownload = false }
+        do {
+            try await runtime.pauseDownload(installed, report: snapshot?.report)
+        } catch {
+            message = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    func resumeDownload() async {
+        guard let runtime = app.runtime, !isChangingDownload else { return }
+        message = nil
+        isChangingDownload = true
+        defer { isChangingDownload = false }
+        do {
+            try await runtime.resumeDownload(installed)
+        } catch {
+            message = error.localizedDescription
+        }
+        try? await Task.sleep(for: .seconds(2))
+        await refresh()
+    }
+
+    // MARK: Deleting
+
+    var canDelete: Bool {
+        guard !isDeleting, pending == nil else { return false }
+        switch state {
+        case .starting?, .stopping?: return false
+        default: return true
+        }
+    }
+
+    func deletionPlan() -> DeletionPlan {
+        ModelDeletion.plan(for: installed, among: app.controllers.map(\.installed))
+    }
+
+    /// Stops the server or download, removes the files and the setup folder, and rescans.
+    func delete(_ plan: DeletionPlan) async -> Bool {
+        guard let runtime = app.runtime, canDelete else { return false }
+        message = nil
+        isDeleting = true
+        defer { isDeleting = false }
+        do {
+            try await runtime.delete(installed, plan: plan, snapshot: snapshot)
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
+        app.rescan()
+        return true
     }
 
     func start() async {

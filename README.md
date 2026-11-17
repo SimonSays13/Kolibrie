@@ -15,8 +15,12 @@ Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri instal
 | Menu bar app: model rows, download progress, logs window, copy URLs | Built; not yet checked by eye |
 | Models window: catalogue checked against this Mac, install with confirmation, download progress | Built; install launch tested live with a real download (then cancelled); window not yet checked by eye |
 | Install a model: detached `coli setup`, free port, free-space warning, drive-connected check | Working |
+| Settings window: where new models are downloaded | Built; not yet checked by eye |
+| Pause and resume a download | Working; tested live (resumes from the partial files) |
+| Delete a model (files and setup folder), with a confirmation window | Working; tested live on a throwaway install |
+| Download time left, measured over the last few minutes rather than Colibri's whole-run average | Working; tested with real readings |
 | Health check: `coli doctor --json` decoding | Working in the core; not yet shown in the app |
-| `kolibrie` helper: `list`, `start <id>`, `stop <id>`, `catalogue`, `install <model>` | Working |
+| `kolibrie` helper: `list`, `start`, `stop`, `catalogue`, `install`, `pause`, `resume`, `delete` | Working |
 | Installing Colibri itself, Metal engine option, harness launcher, configuration UI, updates, run at login | Planned |
 
 ## Building

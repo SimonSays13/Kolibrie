@@ -3,6 +3,8 @@ import ColibriKit
 import Foundation
 import Observation
 
+private let modelsDirectoryKey = "modelsDirectory"
+
 /// The app's view of every Colibri install on this Mac. It rescans the setup homes and asks
 /// each model for its state on a timer; Colibri itself stays the source of truth.
 @MainActor @Observable
@@ -17,6 +19,7 @@ final class AppModel {
     private(set) var includeUnfit = false
     private(set) var installErrors: [String: String] = [:]
     private var pendingInstalls: [String: Date] = [:]
+    private(set) var modelsDirectoryPreference: String? = UserDefaults.standard.string(forKey: modelsDirectoryKey)
     private var polling: Task<Void, Never>?
 
     init() {
@@ -96,9 +99,21 @@ final class AppModel {
     /// Where new models are downloaded: the folder the existing installs use, so a new model
     /// lands beside them. `nil` leaves the choice to Colibri's default.
     var modelsDirectory: URL? {
+        if let chosen = modelsDirectoryPreference { return URL(fileURLWithPath: chosen) }
+        return automaticModelsDirectory
+    }
+
+    /// The folder the existing installs use most, when no folder has been chosen in Settings.
+    var automaticModelsDirectory: URL? {
         let roots = controllers.compactMap { $0.installed.config.modelsRoot }
         let counts = Dictionary(roots.map { ($0, 1) }, uniquingKeysWith: +)
         return counts.max { $0.value < $1.value }.map { URL(fileURLWithPath: $0.key) }
+    }
+
+    /// Chooses where new models are downloaded; `nil` goes back to the automatic folder.
+    func setModelsDirectory(_ url: URL?) {
+        modelsDirectoryPreference = url?.path
+        UserDefaults.standard.set(url?.path, forKey: modelsDirectoryKey)
     }
 
     var modelsDirectoryAvailable: Bool {
