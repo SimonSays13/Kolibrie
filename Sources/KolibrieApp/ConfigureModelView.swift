@@ -39,6 +39,7 @@ struct ConfigureModelView: View {
                     }
                     Text("Offloads matmuls to the GPU on Apple Silicon. See the Advanced section for related tuning.")
                         .font(.caption).foregroundStyle(.secondary)
+                    metalStatusRow(controller)
                 }
                 Section("Sampling") {
                     optionalIntField(
@@ -110,10 +111,36 @@ struct ConfigureModelView: View {
                     settings = controller.currentSettings
                     loaded = true
                 }
+                if controller.metalAvailability == .unknown {
+                    await controller.checkMetalAvailability()
+                }
             }
         } else {
             Text("This model is no longer installed.").padding(20)
         }
+    }
+
+    // MARK: Apple Silicon status
+
+    /// Whether this model's own engine build can use Metal, per `coli doctor`. Metal support is
+    /// baked into the engine binary Colibri installed, so this is read from the model, not guessed
+    /// from the Metal picker above.
+    @ViewBuilder private func metalStatusRow(_ controller: ModelController) -> some View {
+        HStack(spacing: 6) {
+            switch controller.metalAvailability {
+            case .available(let summary):
+                Label(summary, systemImage: "bolt.fill").foregroundStyle(.green)
+            case .unavailable(let summary):
+                Label(summary, systemImage: "bolt.slash").foregroundStyle(.secondary)
+            case .unknown:
+                ProgressView().controlSize(.small)
+                Text("Checking whether this model's engine can use Metal…")
+            }
+            Spacer()
+            Button("Check again") { Task { await controller.checkMetalAvailability() } }
+                .buttonStyle(.plain)
+        }
+        .font(.caption).foregroundStyle(.secondary)
     }
 
     // MARK: Advanced table

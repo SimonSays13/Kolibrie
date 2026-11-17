@@ -19,7 +19,7 @@ Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri instal
 | Pause and resume a download | Working; tested live (resumes from the partial files) |
 | Delete a model (files and setup folder), with a confirmation window | Working; tested live on a throwaway install |
 | Download time left, measured over the last few minutes rather than Colibri's whole-run average | Working; tested with real readings |
-| Health check: `coli doctor --json` decoding | Working in the core; not yet shown in the app |
+| Health check: `coli doctor --json` decoding, surfaced as a Metal-capability indicator (bolt icon) in the Configure window and the models list, read per model from the `accelerator.gpu` check | Built, with unit-tested interpretation of pass/warn/fail; not yet checked by eye against a live Metal-capable engine |
 | `kolibrie` helper: `list`, `start`, `stop`, `catalogue`, `install`, `pause`, `resume`, `delete`, `install-colibri`, `check-updates` | Working |
 | Set up Colibri when it is missing: checks Python and libomp, installs them with Homebrew if present, downloads the release archive, verifies its checksum | Core tested, including a real download and checksum check; the offer window at launch is built but not yet seen on a Mac without Colibri |
 | Update checks at launch for Colibri and Kolibrie, with an Updates window; Colibri updates restart running models; Kolibrie replaces itself and reopens | Checks tested against GitHub; Colibri update uses the tested installer; the app swap is tested on a stand-in app, not yet on a packaged release |

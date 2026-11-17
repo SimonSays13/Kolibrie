@@ -136,7 +136,10 @@ private struct CatalogueRow: View {
 
     @ViewBuilder private var trailing: some View {
         if let controller = app.controller(for: entry) {
-            Text(controller.state?.label ?? "Installed").font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                MetalBadge(availability: controller.metalAvailability)
+                Text(controller.state?.label ?? "Installed").font(.callout).foregroundStyle(.secondary)
+            }
         } else if app.isStartingInstall(entry) {
             ProgressView().controlSize(.small)
         } else {

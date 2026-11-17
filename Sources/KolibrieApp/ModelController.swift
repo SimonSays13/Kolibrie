@@ -33,6 +33,7 @@ final class ModelController: Identifiable {
     func apply(_ snapshot: ModelSnapshot) {
         self.snapshot = snapshot
         recordDownload(snapshot.state)
+        checkMetalAvailabilityIfNeeded()
     }
 
     func refresh() async {
@@ -40,6 +41,7 @@ final class ModelController: Identifiable {
         let fresh = await runtime.snapshot(of: installed, pending: pending)
         snapshot = fresh
         recordDownload(fresh.state)
+        checkMetalAvailabilityIfNeeded()
     }
 
     // MARK: Downloads
@@ -203,9 +205,39 @@ final class ModelController: Identifiable {
             message = error.localizedDescription
             return false
         }
+        metalAvailability = .unknown
         app.rescan()
         await refresh()
         return true
+    }
+
+    // MARK: Metal / GPU capability
+
+    private(set) var metalAvailability: MetalAvailability = .unknown
+    private var isCheckingMetalAvailability = false
+
+    /// Re-runs `coli doctor` for this model and updates `metalAvailability`, even if it has
+    /// already been checked. Use `checkMetalAvailabilityIfNeeded()` for the normal, cached path.
+    func checkMetalAvailability() async {
+        guard let runtime = app.runtime, let modelDirectory = installed.modelDirectory,
+            !isCheckingMetalAvailability
+        else { return }
+        isCheckingMetalAvailability = true
+        defer { isCheckingMetalAvailability = false }
+        if let report = try? await runtime.cli.doctor(modelDirectory: modelDirectory) {
+            metalAvailability = report.metalAvailability
+        }
+    }
+
+    /// Checks once per model, the first time its state is known to be ready or stopped.
+    /// `coli doctor` reads the engine Colibri actually installed for this model, so the
+    /// Metal answer only needs refreshing after a reconfigure, not on every poll.
+    private func checkMetalAvailabilityIfNeeded() {
+        guard metalAvailability == .unknown, !isCheckingMetalAvailability else { return }
+        switch state {
+        case .ready?, .stopped?: Task { await checkMetalAvailability() }
+        default: break
+        }
     }
 
     // MARK: Harness launching

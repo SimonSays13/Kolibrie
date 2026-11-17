@@ -19,6 +19,12 @@ public struct DoctorReport: Sendable, Equatable, Decodable {
         case status, model, checks
     }
 
+    public init(status: String, model: String?, checks: [Check]) {
+        self.status = status
+        self.model = model
+        self.checks = checks
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         status = try container.decode(String.self, forKey: .status)
@@ -41,5 +47,39 @@ extension ColiCLI {
         } catch {
             throw ColiError.commandFailed(command: "doctor", exitCode: output.exitCode, output: output.combined)
         }
+    }
+}
+
+/// Whether a model's engine build can actually use the Metal GPU, read from `coli doctor`'s
+/// `accelerator.gpu` check (the only GPU accelerator relevant on macOS). Colibri reports this
+/// per model because it depends on how that model's engine binary was built, not just on the
+/// hardware.
+public enum MetalAvailability: Sendable, Equatable {
+    /// The engine can use the GPU; `summary` is Colibri's own wording.
+    case available(String)
+    /// Either no usable GPU, or (the common case on a prebuilt CPU engine) one is present but
+    /// this engine build can't use it; `summary` is Colibri's own wording.
+    case unavailable(String)
+    /// `coli doctor` hasn't reported on this yet.
+    case unknown
+
+    public var summary: String? {
+        switch self {
+        case .available(let text), .unavailable(let text): return text
+        case .unknown: return nil
+        }
+    }
+}
+
+extension DoctorReport {
+    public var metalAvailability: MetalAvailability {
+        guard let check = checks.first(where: { $0.id == "accelerator.gpu" }) else { return .unknown }
+        if check.isFailure || check.isWarning {
+            return .unavailable(check.summary ?? "A GPU was detected, but this engine build can't use it.")
+        }
+        if check.status == "pass" {
+            return .available(check.summary ?? "GPU acceleration is available.")
+        }
+        return .unknown
     }
 }

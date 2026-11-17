@@ -84,6 +84,7 @@ struct ModelRow: View {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
+                MetalBadge(availability: controller.metalAvailability)
                 actionButton
                 moreMenu
             }
@@ -199,6 +200,23 @@ struct ModelRow: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+    }
+}
+
+/// A small bolt icon showing whether a model's engine can actually use Metal, per `coli doctor`.
+/// Shown nowhere while unchecked, since most models haven't been probed yet at that moment.
+struct MetalBadge: View {
+    let availability: MetalAvailability
+
+    var body: some View {
+        switch availability {
+        case .available(let summary):
+            Image(systemName: "bolt.fill").foregroundStyle(.green).help(summary)
+        case .unavailable(let summary):
+            Image(systemName: "bolt.slash").foregroundStyle(.secondary).help(summary)
+        case .unknown:
+            EmptyView()
+        }
     }
 }
 

@@ -92,4 +92,31 @@ struct DoctorTests {
         #expect(!report.isHealthy)
         #expect(report.failures.count == 1)
     }
+
+    @Test func warningAcceleratorCheckMeansMetalIsUnavailable() throws {
+        let report = try Fixture.decode(DoctorReport.self, "doctor-qwen-warning")
+        #expect(
+            report.metalAvailability
+                == .unavailable("GPU detected but the engine is CPU-only"))
+    }
+
+    @Test func passingAcceleratorCheckMeansMetalIsAvailable() {
+        let report = DoctorReport(
+            status: "ok", model: "/models/x",
+            checks: [DoctorReport.Check(id: "accelerator.gpu", status: "pass", summary: "Metal GPU engaged")])
+        #expect(report.metalAvailability == .available("Metal GPU engaged"))
+    }
+
+    @Test func failingAcceleratorCheckAlsoMeansMetalIsUnavailable() {
+        let report = DoctorReport(
+            status: "error", model: "/models/x",
+            checks: [DoctorReport.Check(id: "accelerator.gpu", status: "fail", summary: "no GPU found")])
+        #expect(report.metalAvailability == .unavailable("no GPU found"))
+    }
+
+    @Test func noAcceleratorCheckAtAllMeansMetalAvailabilityIsUnknown() {
+        let report = DoctorReport(status: "ok", model: "/models/x", checks: [])
+        #expect(report.metalAvailability == .unknown)
+        #expect(report.metalAvailability.summary == nil)
+    }
 }
