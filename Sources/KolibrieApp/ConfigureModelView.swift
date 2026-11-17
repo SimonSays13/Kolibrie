@@ -111,9 +111,6 @@ struct ConfigureModelView: View {
                     settings = controller.currentSettings
                     loaded = true
                 }
-                if controller.metalAvailability == .unknown {
-                    await controller.checkMetalAvailability()
-                }
             }
         } else {
             Text("This model is no longer installed.").padding(20)
@@ -122,23 +119,27 @@ struct ConfigureModelView: View {
 
     // MARK: Apple Silicon status
 
-    /// Whether this model's own engine build can use Metal, per `coli doctor`. Metal support is
-    /// baked into the engine binary Colibri installed, so this is read from the model, not guessed
-    /// from the Metal picker above.
+    /// Two separate facts, never conflated: what Colibri's project documents this model's
+    /// family as able to do on Metal (`metalSupport`, curated by hand \u{2014} `coli doctor` has no
+    /// Metal awareness on macOS, see `MetalSupport.swift`), and whether this model's own server
+    /// has actually engaged it, read live from its serve log (`metalEngagement`).
     @ViewBuilder private func metalStatusRow(_ controller: ModelController) -> some View {
-        HStack(spacing: 6) {
-            switch controller.metalAvailability {
-            case .available(let summary):
-                Label(summary, systemImage: "bolt.fill").foregroundStyle(.green)
-            case .unavailable(let summary):
-                Label(summary, systemImage: "bolt.slash").foregroundStyle(.secondary)
-            case .unknown:
-                ProgressView().controlSize(.small)
-                Text("Checking whether this model's engine can use Metal…")
+        VStack(alignment: .leading, spacing: 4) {
+            if let detail = controller.metalSupport.detail {
+                Label(detail, systemImage: "info.circle").foregroundStyle(.secondary)
             }
-            Spacer()
-            Button("Check again") { Task { await controller.checkMetalAvailability() } }
-                .buttonStyle(.plain)
+            switch controller.metalEngagement {
+            case .confirmedActive(let detail):
+                Label(detail, systemImage: "bolt.fill").foregroundStyle(.green)
+            case .confirmedInactive(let detail):
+                Label(detail, systemImage: "bolt.trianglebadge.exclamationmark").foregroundStyle(.orange)
+            case .notObserved:
+                Label(
+                    "Not yet confirmed \u{2014} start the model, then reopen this window, to check its own log.",
+                    systemImage: "bolt")
+            case .notApplicable:
+                Label("No Metal backend exists for this model's family yet.", systemImage: "bolt.slash")
+            }
         }
         .font(.caption).foregroundStyle(.secondary)
     }

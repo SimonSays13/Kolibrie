@@ -84,7 +84,7 @@ struct ModelRow: View {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                MetalBadge(availability: controller.metalAvailability)
+                MetalBadge(support: controller.metalSupport, engagement: controller.metalEngagement)
                 actionButton
                 moreMenu
             }
@@ -203,19 +203,29 @@ struct ModelRow: View {
     }
 }
 
-/// A small bolt icon showing whether a model's engine can actually use Metal, per `coli doctor`.
-/// Shown nowhere while unchecked, since most models haven't been probed yet at that moment.
+/// A small bolt icon for a model's Metal story: whether its family can use Metal at all
+/// (`MetalFamilySupport`, from Colibri's own docs) and, for one that can, whether this model's
+/// own server has actually engaged it (`MetalEngagement`, read from its serve log — `coli
+/// doctor` has no Metal awareness on macOS, see `MetalSupport.swift`). Shown nowhere for a
+/// family with no Metal path at all.
 struct MetalBadge: View {
-    let availability: MetalAvailability
+    let support: MetalFamilySupport
+    let engagement: MetalEngagement
 
     var body: some View {
-        switch availability {
-        case .available(let summary):
-            Image(systemName: "bolt.fill").foregroundStyle(.green).help(summary)
-        case .unavailable(let summary):
-            Image(systemName: "bolt.slash").foregroundStyle(.secondary).help(summary)
-        case .unknown:
+        switch support {
+        case .unsupported:
             EmptyView()
+        case .full, .partial:
+            switch engagement {
+            case .confirmedActive(let detail):
+                Image(systemName: "bolt.fill").foregroundStyle(.green).help(detail)
+            case .confirmedInactive(let detail):
+                Image(systemName: "bolt.trianglebadge.exclamationmark").foregroundStyle(.orange).help(detail)
+            case .notObserved, .notApplicable:
+                Image(systemName: "bolt").foregroundStyle(.secondary)
+                    .help((support.detail ?? "") + " Not yet confirmed \u{2014} start the model to check.")
+            }
         }
     }
 }
@@ -267,5 +277,19 @@ enum LogTail {
         let data = (try? handle.readToEnd()) ?? Data()
         let lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: false)
         return lines.suffix(maxLines).joined(separator: "\n")
+    }
+
+    /// Everything logged since the most recent `coli start`'s "--- start ..." banner, within the
+    /// last `maxBytes` of the file. A one-time startup line (such as a Metal-engagement marker)
+    /// would otherwise scroll out of a plain tail read during a long-running, chatty session.
+    static func readSinceLastStart(url: URL, maxBytes: Int = 400_000) -> String {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return "" }
+        defer { try? handle.close() }
+        let size = (try? handle.seekToEnd()) ?? 0
+        try? handle.seek(toOffset: size > UInt64(maxBytes) ? size - UInt64(maxBytes) : 0)
+        let data = (try? handle.readToEnd()) ?? Data()
+        let text = String(decoding: data, as: UTF8.self)
+        guard let range = text.range(of: "\n--- start ", options: .backwards) else { return text }
+        return String(text[range.lowerBound...])
     }
 }

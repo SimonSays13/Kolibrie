@@ -33,7 +33,6 @@ final class ModelController: Identifiable {
     func apply(_ snapshot: ModelSnapshot) {
         self.snapshot = snapshot
         recordDownload(snapshot.state)
-        checkMetalAvailabilityIfNeeded()
     }
 
     func refresh() async {
@@ -41,7 +40,6 @@ final class ModelController: Identifiable {
         let fresh = await runtime.snapshot(of: installed, pending: pending)
         snapshot = fresh
         recordDownload(fresh.state)
-        checkMetalAvailabilityIfNeeded()
     }
 
     // MARK: Downloads
@@ -205,7 +203,6 @@ final class ModelController: Identifiable {
             message = error.localizedDescription
             return false
         }
-        metalAvailability = .unknown
         app.rescan()
         await refresh()
         return true
@@ -213,31 +210,16 @@ final class ModelController: Identifiable {
 
     // MARK: Metal / GPU capability
 
-    private(set) var metalAvailability: MetalAvailability = .unknown
-    private var isCheckingMetalAvailability = false
+    /// What Colibri's own project documents this model's family as able to do on Metal.
+    /// Never `coli doctor` — see `MetalSupport.swift` for why that check can't be trusted here.
+    var metalSupport: MetalFamilySupport { MetalSupportCatalog.support(for: installed.config.family) }
 
-    /// Re-runs `coli doctor` for this model and updates `metalAvailability`, even if it has
-    /// already been checked. Use `checkMetalAvailabilityIfNeeded()` for the normal, cached path.
-    func checkMetalAvailability() async {
-        guard let runtime = app.runtime, let modelDirectory = installed.modelDirectory,
-            !isCheckingMetalAvailability
-        else { return }
-        isCheckingMetalAvailability = true
-        defer { isCheckingMetalAvailability = false }
-        if let report = try? await runtime.cli.doctor(modelDirectory: modelDirectory) {
-            metalAvailability = report.metalAvailability
-        }
-    }
-
-    /// Checks once per model, the first time its state is known to be ready or stopped.
-    /// `coli doctor` reads the engine Colibri actually installed for this model, so the
-    /// Metal answer only needs refreshing after a reconfigure, not on every poll.
-    private func checkMetalAvailabilityIfNeeded() {
-        guard metalAvailability == .unknown, !isCheckingMetalAvailability else { return }
-        switch state {
-        case .ready?, .stopped?: Task { await checkMetalAvailability() }
-        default: break
-        }
+    /// Whether this model's own server process has actually engaged Metal, read live from its
+    /// serve log every time this is asked (not cached), so a restart or a settings change is
+    /// reflected the next time anything reads it rather than needing an explicit re-check.
+    var metalEngagement: MetalEngagement {
+        MetalLogSignal.engagement(
+            familyID: installed.config.family, log: LogTail.readSinceLastStart(url: installed.serveLogURL))
     }
 
     // MARK: Harness launching

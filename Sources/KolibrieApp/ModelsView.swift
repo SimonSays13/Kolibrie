@@ -33,23 +33,41 @@ struct ModelsView: View {
     }
 
     private var header: some View {
-        HStack {
-            Text("Models").font(.title2.weight(.semibold))
-            Spacer()
-            Toggle(
-                "Show models that do not fit",
-                isOn: Binding(
-                    get: { app.includeUnfit },
-                    set: { value in Task { await app.setIncludeUnfit(value) } })
-            )
-            .toggleStyle(.checkbox)
-            Button {
-                Task { await app.loadCatalogue() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Models").font(.title2.weight(.semibold))
+                Spacer()
+                Toggle(
+                    "Show models that do not fit",
+                    isOn: Binding(
+                        get: { app.includeUnfit },
+                        set: { value in Task { await app.setIncludeUnfit(value) } })
+                )
+                .toggleStyle(.checkbox)
+                Toggle(
+                    "Show non-Metal models",
+                    isOn: Binding(
+                        get: { app.showsNonMetalModels },
+                        set: { app.setShowsNonMetalModels($0) })
+                )
+                .toggleStyle(.checkbox)
+                Button {
+                    Task { await app.loadCatalogue() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .help("Reload the catalogue")
+                .disabled(app.catalogueLoading)
             }
-            .help("Reload the catalogue")
-            .disabled(app.catalogueLoading)
+            if !app.showsNonMetalModels {
+                Text(
+                    app.hiddenNonMetalCount > 0
+                        ? "Showing Metal-capable models only (GLM, Inkling, Kimi K3) \u{2014} \(app.hiddenNonMetalCount) others hidden. "
+                            + "Colibri's own health check can't tell Metal apart from CPU on this Mac, so this list is curated by hand."
+                        : "Showing Metal-capable models only (GLM, Inkling, Kimi K3)."
+                )
+                .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .padding(12)
     }
@@ -131,13 +149,18 @@ private struct CatalogueRow: View {
         if let size = entry.downloadGB { parts.append(String(format: "%.1f GB download", size)) }
         if let min = entry.ramMinGB { parts.append(String(format: "%.0f GB RAM minimum", min)) }
         if let runs = entry.runs { parts.append(runs) }
+        switch MetalSupportCatalog.support(for: entry.family) {
+        case .full: parts.append("full Metal")
+        case .partial: parts.append("partial Metal (MoE stays on CPU)")
+        case .unsupported: parts.append("no Metal backend")
+        }
         return parts.joined(separator: " · ")
     }
 
     @ViewBuilder private var trailing: some View {
         if let controller = app.controller(for: entry) {
             HStack(spacing: 6) {
-                MetalBadge(availability: controller.metalAvailability)
+                MetalBadge(support: controller.metalSupport, engagement: controller.metalEngagement)
                 Text(controller.state?.label ?? "Installed").font(.callout).foregroundStyle(.secondary)
             }
         } else if app.isStartingInstall(entry) {

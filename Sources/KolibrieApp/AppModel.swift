@@ -26,9 +26,11 @@ final class AppModel {
         UserDefaults.standard.object(forKey: checkForUpdatesKey) as? Bool ?? true
     private(set) var runtime: ModelRuntime?
     private(set) var catalogue: [CatalogueEntry] = []
+    private var catalogueAll: [CatalogueEntry] = []
     private(set) var catalogueError: String?
     private(set) var catalogueLoading = false
     private(set) var includeUnfit = false
+    private(set) var showsNonMetalModels = false
     private(set) var installErrors: [String: String] = [:]
     private var pendingInstalls: [String: Date] = [:]
     private(set) var modelsDirectoryPreference: String? = UserDefaults.standard.string(forKey: modelsDirectoryKey)
@@ -294,11 +296,29 @@ final class AppModel {
         catalogueLoading = true
         defer { catalogueLoading = false }
         do {
-            catalogue = try await runtime.cli.catalogue(includeUnfit: includeUnfit)
+            catalogueAll = try await runtime.cli.catalogue(includeUnfit: includeUnfit)
+            applyMetalFilter()
             catalogueError = nil
         } catch {
             catalogueError = error.localizedDescription
         }
+    }
+
+    /// Colibri's catalogue has no Metal-capability field of its own (and `coli doctor` can't
+    /// supply one either — see `MetalSupport.swift`), so this filters by the family ids
+    /// `MetalSupportCatalog` curates by hand against Colibri's own docs.
+    func setShowsNonMetalModels(_ value: Bool) {
+        showsNonMetalModels = value
+        applyMetalFilter()
+    }
+
+    /// How many catalogue entries the Metal filter is currently hiding.
+    var hiddenNonMetalCount: Int { catalogueAll.count - catalogue.count }
+
+    private func applyMetalFilter() {
+        catalogue =
+            showsNonMetalModels
+            ? catalogueAll : catalogueAll.filter { MetalSupportCatalog.isMetalCapable(familyID: $0.family) }
     }
 
     /// The install of this catalogue model, if there is one.
