@@ -24,6 +24,11 @@ struct KolibrieApp: App {
         }
         .defaultSize(width: 760, height: 480)
 
+        Window("Updates", id: "updates") {
+            UpdatesView(app: app)
+        }
+        .windowResizability(.contentSize)
+
         Window("Set up Colibri", id: "setup-colibri") {
             SetupColibriView(app: app)
         }
@@ -67,6 +72,12 @@ private struct MenuBarLabel: View {
         .task {
             if await app.colibriIsMissingAtLaunch() {
                 openWindow(id: "setup-colibri")
+                NSApplication.shared.activate()
+            }
+            guard app.checksForUpdatesAtLaunch else { return }
+            await app.checkForUpdates()
+            if app.updates.hasUpdates {
+                openWindow(id: "updates")
                 NSApplication.shared.activate()
             }
         }

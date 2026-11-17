@@ -2,7 +2,12 @@ import SwiftUI
 
 enum AppInfo {
     static let name = "Kolibrie"
-    static let version = "0.1.0 (development)"
+    /// The release number, from the app bundle when there is one.
+    static let versionNumber =
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
+    static let version = canSelfUpdate ? versionNumber : versionNumber + " (development)"
+    /// Only a packaged app can replace itself; a build run from a folder cannot.
+    static let canSelfUpdate = Bundle.main.bundleURL.pathExtension == "app"
     static let colibriRepository = URL(string: "https://github.com/JustVugg/colibri")!
     static let apacheLicence = URL(string: "https://www.apache.org/licenses/LICENSE-2.0")!
 }

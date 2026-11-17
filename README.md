@@ -20,8 +20,9 @@ Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri instal
 | Delete a model (files and setup folder), with a confirmation window | Working; tested live on a throwaway install |
 | Download time left, measured over the last few minutes rather than Colibri's whole-run average | Working; tested with real readings |
 | Health check: `coli doctor --json` decoding | Working in the core; not yet shown in the app |
-| `kolibrie` helper: `list`, `start`, `stop`, `catalogue`, `install`, `pause`, `resume`, `delete`, `install-colibri` | Working |
+| `kolibrie` helper: `list`, `start`, `stop`, `catalogue`, `install`, `pause`, `resume`, `delete`, `install-colibri`, `check-updates` | Working |
 | Set up Colibri when it is missing: checks Python and libomp, installs them with Homebrew if present, downloads the release archive, verifies its checksum | Core tested, including a real download and checksum check; the offer window at launch is built but not yet seen on a Mac without Colibri |
+| Update checks at launch for Colibri and Kolibrie, with an Updates window; Colibri updates restart running models; Kolibrie replaces itself and reopens | Checks tested against GitHub; Colibri update uses the tested installer; the app swap is tested on a stand-in app, not yet on a packaged release |
 | Metal engine option, harness launcher, configuration UI, updates, run at login | Planned |
 
 ## Building
@@ -55,3 +56,7 @@ macOS 15 or later on Apple Silicon.
 ## Licence
 
 Apache-2.0, the same licence as Colibri. See `LICENSE` and `NOTICE`. Model weights keep their own licences.
+
+## Releases
+
+Kolibrie looks for updates on its GitHub releases page. A release needs `Kolibrie-<version>.zip` (containing `Kolibrie.app`) and a `SHA256SUMS.txt` that lists it. The check is quiet until a release exists.

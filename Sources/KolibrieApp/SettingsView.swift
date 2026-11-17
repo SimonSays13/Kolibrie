@@ -4,6 +4,7 @@ import SwiftUI
 /// Kolibrie's own settings.
 struct SettingsView: View {
     let app: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -24,6 +25,23 @@ struct SettingsView: View {
                         .disabled(app.modelsDirectoryPreference == nil)
                 }
                 caption
+            }
+            Divider()
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Updates").font(.headline)
+                Toggle(
+                    "Check for new versions of Colibri and Kolibrie when Kolibrie starts",
+                    isOn: Binding(
+                        get: { app.checksForUpdatesAtLaunch }, set: { app.setChecksForUpdatesAtLaunch($0) })
+                )
+                .toggleStyle(.checkbox)
+                Button("Check now…") {
+                    Task {
+                        await app.checkForUpdates()
+                        openWindow(id: "updates")
+                        NSApplication.shared.activate()
+                    }
+                }
             }
         }
         .padding(20)

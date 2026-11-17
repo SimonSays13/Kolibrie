@@ -9,6 +9,17 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Kolibrie").font(.headline).padding(.horizontal, 14).padding(.vertical, 10)
             Divider()
+            if app.updates.hasUpdates {
+                Button {
+                    openWindow(id: "updates")
+                    NSApplication.shared.activate()
+                } label: {
+                    Label("Updates are available", systemImage: "arrow.down.circle.fill")
+                }
+                .buttonStyle(.plain).foregroundStyle(.tint)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                Divider()
+            }
             if app.launcherMissing {
                 notice("Colibri is not set up on this Mac.")
                 Button("Set up Colibri…") {

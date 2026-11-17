@@ -16,10 +16,13 @@ public struct ColibriRelease: Sendable, Equatable, Decodable {
 
     public var tag: String
     public var assets: [Asset]
+    /// The release's page on GitHub, with its notes.
+    public var pageURL: URL?
 
     enum CodingKeys: String, CodingKey {
         case tag = "tag_name"
         case assets
+        case pageURL = "html_url"
     }
 
     /// The tag without a leading `v`.
@@ -30,6 +33,15 @@ public struct ColibriRelease: Sendable, Equatable, Decodable {
 
     public var checksums: Asset? { assets.first { $0.name == "SHA256SUMS.txt" } }
 
+    /// Checks downloaded bytes against the published checksum list, and throws if they do not match.
+    public static func verify(_ data: Data, named name: String, against sums: String) throws {
+        guard let expected = parseChecksum(sums, for: name) else {
+            throw ColibriInstaller.InstallError.noChecksum(name)
+        }
+        let actual = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        guard actual == expected else { throw ColibriInstaller.InstallError.checksumMismatch(name) }
+    }
+
     /// Finds `name` in the text of a `sha256sum` file.
     public static func parseChecksum(_ text: String, for name: String) -> String? {
         for line in text.split(whereSeparator: \.isNewline) {
@@ -38,6 +50,13 @@ public struct ColibriRelease: Sendable, Equatable, Decodable {
         }
         return nil
     }
+}
+
+/// A web server answered with something other than success.
+public struct HTTPStatusError: Error, LocalizedError, Equatable {
+    public var status: Int
+    public var host: String
+    public var errorDescription: String? { "\(host) answered \(status)." }
 }
 
 /// Downloads a Colibri release archive, checks it against the published checksum, and unpacks
@@ -104,9 +123,7 @@ public struct ColibriInstaller: Sendable {
         }
         let (data, response) = try await URLSession.shared.data(for: request)
         if let status = (response as? HTTPURLResponse)?.statusCode, !(200..<300).contains(status) {
-            throw URLError(
-                .badServerResponse,
-                userInfo: [NSLocalizedDescriptionKey: "\(url.host ?? "The server") answered \(status)."])
+            throw HTTPStatusError(status: status, host: url.host ?? "The server")
         }
         return data
     }
@@ -126,11 +143,7 @@ public struct ColibriInstaller: Sendable {
         let sumsText = String(decoding: try await download(sums.url), as: UTF8.self)
 
         progress(.verifying)
-        guard let expected = ColibriRelease.parseChecksum(sumsText, for: asset.name) else {
-            throw InstallError.noChecksum(asset.name)
-        }
-        let actual = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
-        guard actual == expected else { throw InstallError.checksumMismatch(asset.name) }
+        try ColibriRelease.verify(archive, named: asset.name, against: sumsText)
 
         progress(.unpacking)
         let fileManager = FileManager.default

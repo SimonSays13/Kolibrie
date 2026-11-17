@@ -7,6 +7,10 @@ struct KolibrieCLI {
     static func main() async {
         let arguments = Array(CommandLine.arguments.dropFirst())
         let command = arguments.first ?? "list"
+        if command == "check-updates" {
+            await checkUpdates()
+            return
+        }
         if command == "install-colibri" {
             await installColibri(Array(arguments.dropFirst()))
             return
@@ -73,7 +77,7 @@ struct KolibrieCLI {
             await install(Array(arguments.dropFirst()), discovery: discovery, runtime: runtime)
         default:
             fail(
-                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>] | pause <id> | resume <id> | delete <id> --yes | install-colibri [--to <folder>]]"
+                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>] | pause <id> | resume <id> | delete <id> --yes | install-colibri [--to <folder>] | check-updates]"
             )
         }
     }
@@ -93,6 +97,29 @@ struct KolibrieCLI {
                 pad(model.id, 22) + pad(model.displayName, 24) + pad(state, 22)
                     + pad(model.port.map(String.init) ?? "-", 6)
                     + pad(server?.backend ?? model.config.backend ?? "-", 8) + http)
+        }
+    }
+
+    static func checkUpdates() async {
+        let discovery = Discovery.installedModels()
+        let installed = LauncherLocator.locate(hints: discovery.models.compactMap { $0.config.launcher })?
+            .installedVersion
+        for (name, repository, current) in [
+            ("Colibri", UpdateCheck.colibriRepository, installed),
+            ("Kolibrie", UpdateCheck.kolibrieRepository, "0.1.0"),
+        ] {
+            do {
+                guard let release = try await UpdateCheck.latest(of: repository) else {
+                    print("\(name): no release published (\(repository))")
+                    continue
+                }
+                let newer = UpdateCheck.isNewer(release, than: current)
+                print(
+                    "\(name): installed \(current ?? "unknown"), latest \(release.version)"
+                        + (newer ? " -> update available" : " (up to date)"))
+            } catch {
+                print("\(name): \(error.localizedDescription)")
+            }
         }
     }
 

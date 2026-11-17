@@ -4,6 +4,7 @@ import Foundation
 import Observation
 
 private let modelsDirectoryKey = "modelsDirectory"
+private let checkForUpdatesKey = "checkForUpdatesAtLaunch"
 
 /// The app's view of every Colibri install on this Mac. It rescans the setup homes and asks
 /// each model for its state on a timer; Colibri itself stays the source of truth.
@@ -19,6 +20,9 @@ final class AppModel {
         self?.rescan()
     }
     private var runtimeNeedsRefresh = false
+    let updates = UpdatesModel()
+    private(set) var checksForUpdatesAtLaunch =
+        UserDefaults.standard.object(forKey: checkForUpdatesKey) as? Bool ?? true
     private(set) var runtime: ModelRuntime?
     private(set) var catalogue: [CatalogueEntry] = []
     private(set) var catalogueError: String?
@@ -115,6 +119,87 @@ final class AppModel {
     func colibriIsMissingAtLaunch() async -> Bool {
         while !hasScanned { try? await Task.sleep(for: .milliseconds(100)) }
         return launcherMissing
+    }
+
+    // MARK: Updates
+
+    func setChecksForUpdatesAtLaunch(_ value: Bool) {
+        checksForUpdatesAtLaunch = value
+        UserDefaults.standard.set(value, forKey: checkForUpdatesKey)
+    }
+
+    func checkForUpdates() async {
+        await updates.check(installedColibri: colibriVersion, installedKolibrie: AppInfo.versionNumber)
+    }
+
+    /// True when Colibri is the copy Kolibrie installed, which is the only one it will replace.
+    var colibriIsManaged: Bool {
+        guard let script = runtime?.cli.launcher.script.path else { return false }
+        return script.hasPrefix(ColibriInstaller.defaultDestination().path + "/")
+    }
+
+    var runningModelNames: [String] {
+        controllers.filter { $0.state == .ready }.map { $0.installed.displayName }
+    }
+
+    /// Stops running models, installs the new Colibri, and starts the same models again.
+    func updateColibri() async {
+        guard let release = updates.colibriRelease, colibriIsManaged, !updates.colibriPhase.isWorking else { return }
+        let running = controllers.filter { $0.state == .ready }
+        do {
+            for controller in running {
+                updates.setColibriPhase(.working("Stopping \(controller.installed.displayName)…"))
+                await controller.stop()
+                if let message = controller.message {
+                    throw ColiError.commandFailed(command: "stop", exitCode: 1, output: message)
+                }
+            }
+            updates.setColibriPhase(.working("Downloading Colibri \(release.version)…"))
+            try await ColibriInstaller().install(release) { step in
+                let text: String
+                switch step {
+                case .downloading: text = "Downloading Colibri \(release.version)…"
+                case .verifying: text = "Checking the download against its published checksum…"
+                case .unpacking: text = "Unpacking…"
+                case .finishing: text = "Putting Colibri in place…"
+                }
+                Task { @MainActor in self.updates.setColibriPhase(.working(text)) }
+            }
+            runtimeNeedsRefresh = true
+            rescan()
+            for controller in running {
+                updates.setColibriPhase(.working("Starting \(controller.installed.displayName) again…"))
+                await controller.start()
+            }
+            updates.markColibriUpdated(to: colibriVersion ?? release.version)
+        } catch {
+            updates.setColibriPhase(.failed(error.localizedDescription))
+        }
+    }
+
+    /// Downloads the new Kolibrie, then quits so a helper can swap it in and open it.
+    func updateKolibrie() async {
+        guard let release = updates.kolibrieRelease, AppInfo.canSelfUpdate, !updates.kolibriePhase.isWorking else {
+            return
+        }
+        let app = Bundle.main.bundleURL
+        do {
+            let staged = try await AppUpdater().stage(release, replacing: app) { step in
+                let text: String
+                switch step {
+                case .downloading: text = "Downloading Kolibrie \(release.version)…"
+                case .verifying: text = "Checking the download against its published checksum…"
+                case .unpacking, .finishing: text = "Unpacking…"
+                }
+                Task { @MainActor in self.updates.setKolibriePhase(.working(text)) }
+            }
+            updates.setKolibriePhase(.working("Restarting Kolibrie…"))
+            try await AppUpdater.relaunch(
+                after: ProcessInfo.processInfo.processIdentifier, replacing: app, with: staged)
+            NSApplication.shared.terminate(nil)
+        } catch {
+            updates.setKolibriePhase(.failed(error.localizedDescription))
+        }
     }
 
     // MARK: Models and installs
