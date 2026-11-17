@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "status": "warning",
+  "model": "/Users/example/colibri-models/qwen36-35b",
+  "mode": "standard",
+  "checks": [
+    {
+      "id": "model.path",
+      "status": "pass",
+      "summary": "model directory is readable"
+    },
+    {
+      "id": "model.config",
+      "status": "pass",
+      "summary": "config.json is valid"
+    },
+    {
+      "id": "model.family",
+      "status": "pass",
+      "summary": "Qwen3.6-35B-A3B family is registered"
+    },
+    {
+      "id": "model.tokenizer",
+      "status": "pass",
+      "summary": "tokenizer.json found"
+    },
+    {
+      "id": "storage.persistence",
+      "status": "pass",
+      "summary": "model directory can store usage and KV state"
+    },
+    {
+      "id": "engine.binary",
+      "status": "pass",
+      "summary": "engine executable is ready"
+    },
+    {
+      "id": "accelerator.gpu",
+      "status": "warn",
+      "summary": "GPU detected but the engine is CPU-only"
+    },
+    {
+      "id": "model.shards",
+      "status": "pass",
+      "summary": "safetensors headers are valid"
+    },
+    {
+      "id": "storage.disk",
+      "status": "pass",
+      "summary": "model backing store is available"
+    },
+    {
+      "id": "memory.ram",
+      "status": "pass",
+      "summary": "RAM budget is viable"
+    },
+    {
+      "id": "placement.plan",
+      "status": "pass",
+      "summary": "tier placement has no warnings"
+    },
+    {
+      "id": "storage.ssd_probe",
+      "status": "skip",
+      "summary": "no cached probe yet; measured on the first Metal+darwin engine start"
+    }
+  ]
+}

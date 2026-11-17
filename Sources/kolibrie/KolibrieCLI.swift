@@ -30,8 +30,14 @@ struct KolibrieCLI {
             } catch {
                 fail(error.localizedDescription)
             }
+        case "catalogue":
+            await catalogue(runtime: runtime, includeUnfit: arguments.contains("--all"))
+        case "install":
+            await install(Array(arguments.dropFirst()), discovery: discovery, runtime: runtime)
         default:
-            fail("usage: kolibrie [list | start <id> | stop <id>]")
+            fail(
+                "usage: kolibrie [list | start <id> | stop <id> | catalogue [--all] | install <model> [--dir <folder>]]"
+            )
         }
     }
 
@@ -50,6 +56,39 @@ struct KolibrieCLI {
                 pad(model.id, 22) + pad(model.displayName, 24) + pad(state, 22)
                     + pad(model.port.map(String.init) ?? "-", 6)
                     + pad(server?.backend ?? model.config.backend ?? "-", 8) + http)
+        }
+    }
+
+    static func catalogue(runtime: ModelRuntime, includeUnfit: Bool) async {
+        do {
+            let entries = try await runtime.cli.catalogue(includeUnfit: includeUnfit)
+            print(pad("MODEL", 28) + pad("DOWNLOAD", 11) + pad("RAM MIN", 9) + "FIT")
+            for entry in entries {
+                let size = entry.downloadGB.map { String(format: "%.1f GB", $0) } ?? "-"
+                let ram = entry.ramMinGB.map { String(format: "%.0f GB", $0) } ?? "-"
+                let fit = (entry.fits == false ? "no" : "yes") + (entry.recommended == true ? " (recommended)" : "")
+                print(pad(entry.id, 28) + pad(size, 11) + pad(ram, 9) + fit)
+            }
+        } catch {
+            fail(error.localizedDescription)
+        }
+    }
+
+    static func install(_ arguments: [String], discovery: DiscoveryResult, runtime: ModelRuntime) async {
+        guard let modelID = arguments.first, !modelID.hasPrefix("--") else {
+            fail("usage: kolibrie install <model> [--dir <folder>]   (ids come from `kolibrie catalogue`)")
+        }
+        var directory: URL?
+        if let index = arguments.firstIndex(of: "--dir"), arguments.indices.contains(index + 1) {
+            directory = URL(fileURLWithPath: arguments[index + 1])
+        }
+        let port = PortPicker.nextFree(avoiding: Set(discovery.models.compactMap(\.port)))
+        do {
+            let log = try await runtime.cli.install(
+                InstallRequest(modelID: modelID, port: port, modelsDirectory: directory))
+            print("Install started on port \(port). Progress: kolibrie list. Log: \(log.path)")
+        } catch {
+            fail(error.localizedDescription)
         }
     }
 

@@ -6,15 +6,18 @@ A native macOS menu bar app, written entirely in Swift, for installing, configur
 
 ## Status
 
-Phase 1 of the plan: the core and a first menu bar app. It finds existing Colibri installs, shows each model's state, and starts and stops them.
+Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri installs, shows each model's state, starts and stops them, and installs new models from Colibri's catalogue.
 
 | Area | State |
 | --- | --- |
 | Discover installs, read `setup.json`, read `coli status --json` | Working, tested against real Colibri 2.1.0 output |
 | Start and stop a model | Working; tested on a live install |
 | Menu bar app: model rows, download progress, logs window, copy URLs | Built; not yet checked by eye |
-| `kolibrie` helper: `list`, `start <id>`, `stop <id>` | Working |
-| Install Colibri and models, harness launcher, configuration UI, updates, run at login | Planned |
+| Models window: catalogue checked against this Mac, install with confirmation, download progress | Built; install launch tested live with a real download (then cancelled); window not yet checked by eye |
+| Install a model: detached `coli setup`, free port, free-space warning, drive-connected check | Working |
+| Health check: `coli doctor --json` decoding | Working in the core; not yet shown in the app |
+| `kolibrie` helper: `list`, `start <id>`, `stop <id>`, `catalogue`, `install <model>` | Working |
+| Installing Colibri itself, Metal engine option, harness launcher, configuration UI, updates, run at login | Planned |
 
 ## Building
 

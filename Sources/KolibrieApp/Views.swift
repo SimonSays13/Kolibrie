@@ -22,6 +22,10 @@ struct MenuContentView: View {
             }
             ForEach(app.problems, id: \.self) { notice($0) }
             HStack(spacing: 16) {
+                Button("Models…") {
+                    openWindow(id: "models")
+                    NSApplication.shared.activate()
+                }
                 Button("About") {
                     openWindow(id: "about")
                     NSApplication.shared.activate()

@@ -28,6 +28,11 @@ struct KolibrieApp: App {
         }
         .defaultSize(width: 760, height: 480)
 
+        Window("Models", id: "models") {
+            ModelsView(app: app)
+        }
+        .defaultSize(width: 640, height: 560)
+
         Window("About Kolibrie", id: "about") {
             AboutView(app: app)
         }
