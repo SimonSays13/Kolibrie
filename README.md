@@ -29,6 +29,31 @@ Phases 1 and 2 of the plan are under way. Kolibrie finds existing Colibri instal
 | Metal engine option (surfaced in the configuration UI above; still Colibri's own default on this Mac) | Planned |
 | Run at login via `SMAppService`, with a per-model "start automatically at login" toggle so Kolibrie can open with no model loaded, or with one already starting | Built; `SMAppService` registration needs a properly bundled, signed app to test for real, so this is unverified until Phase 6 packaging |
 
+## Outstanding work
+
+Not yet built at all:
+
+- **Metal engine option in the Configuration UI.** Switching a model to Colibri's Metal engine still has to be done by hand-editing `setup.json`'s `env` block (`COLI_ENGINE` / `COLI_METAL` or `K3_METAL`); there is no UI toggle for it yet.
+
+Built, but not yet exercised for real (unit tests pass; the window or flow itself has not been opened/run by a person):
+
+- Menu bar model rows, download progress, logs window, copy URLs.
+- Models window (catalogue, install-with-confirmation, download progress).
+- Settings window (download location).
+- Configuration UI (RAM/context/cap/VRAM, sampling, server flags, Advanced table) — flag generation and setup.json round-tripping are unit-tested; the window itself has never been opened.
+- Harness launcher (Claude Code, Codex, OpenCode, Pi, Hermes Agent, Copilot CLI, Mistral Vibe, DeepSeek Harness, OpenClaw) — config generation is unit-tested per harness, but none of it has been run for real in a Terminal window. Only 5 of the 9 harnesses were installed on the dev Mac to confirm against.
+- Colibri/Kolibrie update flow — GitHub checks and the Colibri installer are tested; the Kolibrie self-replace step is only tested on a stand-in app, not a real packaged release.
+- Run-at-login (`SMAppService`) — built, but can't be properly tested until there's a signed, bundled app (blocked on Phase 6, below).
+- Metal-capability live log check (family catalogue + per-engine log markers) — unit-tested for marker parsing; separately confirmed live on 2026-11-17 against real Inkling, GLM-5.3 and Qwen3.6 servers, which reported Metal/CPU status correctly, so this one is now verified in practice even though it predates a formal UI check.
+
+Not started at all (Phase 6 — packaging and distribution):
+
+- Developer ID signing.
+- Notarization.
+- DMG packaging.
+- Homebrew cask.
+- ~~Making the GitHub repo public~~ — done.
+
 ## Building
 
 You need macOS 15 or later on Apple Silicon and Xcode. The Command Line Tools alone are not enough, because SwiftUI's macros ship only with Xcode.
